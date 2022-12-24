@@ -552,8 +552,8 @@ function TeletextCanvas:composite(...)
             for i = #partition, 1, -1 do
                 local other = partition[i]
                 local otherCanvas, ox, oy = other[1], other[2], other[3]
-                -- if PixelCanvas.is(otherCanvas) then ---@cast other PixelCanvas
-                -- t1 = os.epoch("utc")
+                if PixelCanvas.is(otherCanvas) then ---@cast other PixelCanvas
+                    t1 = os.epoch("utc")
                     if otherCanvas.canvas[y-oy+1] then
                         local otherPixel = (otherCanvas.canvas[y-oy+1] or {})[x-ox+1]
                         if otherPixel then
@@ -567,38 +567,38 @@ function TeletextCanvas:composite(...)
                             break
                         end
                     end
-                -- t2 = os.epoch("utc")
-                -- else ---@cast other TextCanvas
-                --     local otherRow = other.canvas[targetY]
-                --     local otherT = otherRow.t[targetX]
-                --     local otherC = otherRow.c[targetX]
-                --     local otherB = otherRow.b[targetX]
-                --     if otherT then
-                --         found = true
-                --         foundText = true
+                t2 = os.epoch("utc")
+                else ---@cast other TextCanvas
+                    local otherRow = otherCanvas.canvas[targetY]
+                    local otherT = otherRow.t[targetX]
+                    local otherC = otherRow.c[targetX]
+                    local otherB = otherRow.b[targetX]
+                    if otherT then
+                        found = true
+                        foundText = true
 
-                --         local currRow = self.canvas[targetY]
-                --         local currT = currRow.t[targetX]
-                --         local currC = currRow.c[targetX]
-                --         local currB = currRow.b[targetX]
+                        local currRow = self.canvas[targetY]
+                        local currT = currRow.t[targetX]
+                        local currC = currRow.c[targetX]
+                        local currB = currRow.b[targetX]
 
-                --         if otherT ~= currT or otherC ~= currC or otherB ~= currB then
-                --             currRow.t[targetX] = otherT
-                --             currRow.c[targetX] = otherC
-                --             currRow.b[targetX] = otherB
-                --             currRow.direct[targetX] = true
-                --             self.dirty[targetY][targetX] = false -- Already processed
+                        if otherT ~= currT or otherC ~= currC or otherB ~= currB then
+                            currRow.t[targetX] = otherT
+                            currRow.c[targetX] = otherC
+                            currRow.b[targetX] = otherB
+                            currRow.direct[targetX] = true
+                            self.dirty[targetY][targetX] = false -- Already processed
 
-                --             local dirtyRow = self.dirtyRows[targetY] or {}
-                --             local minX, maxX = dirtyRow[1], dirtyRow[2]
-                --             minX = minX and min(minX, targetX) or targetX
-                --             maxX = maxX and max(maxX, targetX) or targetX
-                --             self.dirtyRows[targetY] = { minX, maxX }
-                --         end
+                            local dirtyRow = self.dirtyRows[targetY] or {}
+                            local minX, maxX = dirtyRow[1], dirtyRow[2]
+                            minX = minX and min(minX, targetX) or targetX
+                            maxX = maxX and max(maxX, targetX) or targetX
+                            self.dirtyRows[targetY] = { minX, maxX }
+                        end
 
-                --         break
-                --     end
-                -- end
+                        break
+                    end
+                end
             end
 
             if not found then

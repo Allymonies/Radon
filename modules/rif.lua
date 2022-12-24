@@ -66,7 +66,7 @@ local revPalMap = {
 local palMap = {}
 for i = 1, 16 do
     palMap[i] = 2^(i - 1)
-    colors[revPalMap[i]] = 2^(i - 1)
+    --colors[revPalMap[i]] = 2^(i - 1)
 end
 
 return function(filename)

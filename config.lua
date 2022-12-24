@@ -3,14 +3,48 @@ return {
         title = "Radon Shop"
     },
     theme = {
-        bgColor = colors.gray,
-        headerBgColor = colors.red,
-        headerColor = colors.white
+        formatting = {
+            headerAlign = "center",
+            productNameAlign = "center",
+            productTextSize = "auto"
+        },
+        colors = {
+            bgColor = colors.lightGray,
+            headerBgColor = colors.red,
+            headerColor = colors.white,
+            productBgColor = colors.blue,
+            outOfStockQtyColor = colors.red,
+            lowQtyColor = colors.orange,
+            warningQtyColor = colors.yellow,
+            normalQtyColor = colors.white,
+            productNameColor = colors.white,
+            outOfStockNameColor = colors.lightGray,
+            priceColor = colors.lime,
+            addressColor = colors.white
+        },
+        palette = {
+            [colors.black] = 0x181818,
+            [colors.blue] = 0x182B52,
+            [colors.purple] = 0x7E2553,
+            [colors.green] = 0x008751,
+            [colors.brown] = 0xAB5136,
+            [colors.gray] = 0x565656,
+            [colors.lightGray] = 0x9D9D9D,
+            [colors.red] = 0xFF004C,
+            [colors.orange] = 0xFFA300,
+            [colors.yellow] = 0xFFEC23,
+            [colors.lime] = 0x00A23C,
+            [colors.cyan] = 0x29ADFF,
+            [colors.magenta] = 0x82769C,
+            [colors.pink] = 0xFF77A9,
+            [colors.lightBlue] = 0x3D7EDB,
+            [colors.white] = 0xECECEC
+        }
     },
     currencies = {
         {
             id = "krist", -- if not krist or tenebra, must supply endpoint
-            -- endpoint = "https://krist.dev"
+            -- node = "https://krist.dev"
             host = "kristallie",
             name = "radon.kst",
             pkey = "",
@@ -21,7 +55,7 @@ return {
         },
         {
             id = "tenebra", -- if not krist or tenebra, must supply endpoint
-            -- endpoint = "https://krist.dev"
+            -- node = "https://krist.dev"
             host = "tttttttttt",
             name = "radon.tst",
             pkey = "",
@@ -35,5 +69,9 @@ return {
         monitor = nil,
         exchangeChest = nil,
         outputChest = nil,
+    },
+    exchange = {
+        enabled = true,
+        node = "https://localhost:8000/"
     }
 }

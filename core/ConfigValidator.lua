@@ -5,16 +5,50 @@ local configSchema = {
         title = "string"
     },
     theme = {
-        bgColor = "color",
-        headerBgColor = "color",
-        headerColor = "color"
+        formatting = {
+            headerAlign = "enum<'left' | 'center' | 'right'>: alignment",
+            productNameAlign = "enum<'left' | 'center' | 'right'>: alignment",
+            productTextSize = "enum<'small' | 'medium' | 'large' | 'auto'>: text size",
+        },
+        colors = {
+            bgColor = "color",
+            headerBgColor = "color",
+            headerColor = "color",
+            productBgColor = "color",
+            outOfStockQtyColor = "color",
+            lowQtyColor = "color",
+            warningQtyColor = "color",
+            normalQtyColor = "color",
+            productNameColor = "color",
+            outOfStockNameColor = "color",
+            priceColor = "color",
+            addressColor = "color"
+        },
+        palette = {
+            [colors.black] = "number",
+            [colors.blue] = "number",
+            [colors.purple] = "number",
+            [colors.green] = "number",
+            [colors.brown] = "number",
+            [colors.gray] = "number",
+            [colors.lightGray] = "number",
+            [colors.red] = "number",
+            [colors.orange] = "number",
+            [colors.yellow] = "number",
+            [colors.lime] = "number",
+            [colors.cyan] = "number",
+            [colors.magenta] = "number",
+            [colors.pink] = "number",
+            [colors.lightBlue] = "number",
+            [colors.white] = "number"
+        }
     },
     currencies = {
         __type = "array",
         __min = 1,
         __entry = {
             id = "string",
-            endpoint = "string?",
+            node = "string?",
             host = [[regex<^\w{10}$>: address]],
             name = "string",
             pkey = "string",
@@ -26,6 +60,10 @@ local configSchema = {
         monitor = "string?",
         exchangeChest = "string?",
         outputChest = "string?",
+    },
+    exchange = {
+        enabled = "boolean",
+        node = "string"
     }
 }
 
@@ -37,6 +75,7 @@ local productsSchema = {
         address = "string",
         order = "number?",
         price = "number",
+        quantity = "number?",
         priceOverrides = {
             __type = "array?",
             __entry = {

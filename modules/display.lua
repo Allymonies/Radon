@@ -22,35 +22,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
-local canvases = require("modules.canvas")
-local PixelCanvas = canvases.PixelCanvas
-local TeletextCanvas = canvases.TeletextCanvas
-local TextCanvas = canvases.TextCanvas
+local Display = {}
+local Display_mt = { __index = Display }
+
+function Display.new(props)
+    local self = setmetatable({}, Display_mt)
+
+    local canvases = require("modules.canvas")
+    local PixelCanvas = canvases.PixelCanvas
+    local TeletextCanvas = canvases.TeletextCanvas
+    local TextCanvas = canvases.TextCanvas
 
 
-local mon = peripheral.find("monitor")
-if not mon then
-    mon = term
-else
-    mon.setTextScale(0.5)
-end
-
--- Set Riko Palette
-require("util.riko")(mon)
-
-local ccCanvas = TeletextCanvas(colors.green, mon.getSize())
-ccCanvas:outputFlush(mon)
-
-local bgCanvas = ccCanvas.pixelCanvas:newFromSize()
-for y = 1, bgCanvas.height do
-    for x = 1, bgCanvas.width do
-        -- T-Piece
-        bgCanvas:setPixel(x, y, colors.lightGray)
+    self.mon = peripheral.find("monitor")
+    if not self.mon then
+        self.mon = term
+    else
+        self.mon.setTextScale(0.5)
     end
+
+    -- Set Riko Palette
+    require("util.setPalette")(self.mon, props.theme.palette)
+
+    self.ccCanvas = TeletextCanvas(props.theme.colors.bgColor, self.mon.getSize())
+    self.ccCanvas:outputFlush(self.mon)
+
+    self.textCanvas = TextCanvas(props.theme.colors.headerBgColor, self.mon.getSize())
+
+    self.bgCanvas = self.ccCanvas.pixelCanvas:newFromSize()
+    -- for y = 1, self.bgCanvas.height do
+    --     for x = 1, self.bgCanvas.width do
+    --         -- T-Piece
+    --         self.bgCanvas:setPixel(x, y, props.theme.colors.headerBgColor)
+    --     end
+    -- end
+
+    return self
 end
 
-return {
-    ccCanvas = ccCanvas,
-    bgCanvas = bgCanvas,
-    mon = mon,
-}
+return Display
