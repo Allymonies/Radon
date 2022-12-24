@@ -1,4 +1,5 @@
 local Krypton = require("Krypton")
+local ScanInventory = require("core.inventory.ScanInventory")
 
 ---@class ShopState
 ---@field running boolean
@@ -47,6 +48,11 @@ local function runShop(state)
         while true do
             local event, transaction = os.pullEvent("transaction")
             --print("Received transaction on " .. transaction.source)
+        end
+    end, function()
+        while state.running do
+            ScanInventory.updateProductInventory(state.products)
+            sleep(state.config.settings.pollFrequency)
         end
     end)
 end

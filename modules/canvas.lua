@@ -545,7 +545,11 @@ function TeletextCanvas:composite(...)
         for x, _ in pairs(row) do
             local targetX = ceil(x / 2)
             local currPixel = self.pixelCanvas.canvas[y][x]
-            local partition = partitions[floor(y/partitionSize)+1][floor(x/partitionSize)+1]
+            partitionY = math.min(floor(y/partitionSize)+1, #partitions)
+            partitionX = math.min(floor(x/partitionSize)+1, #partitions[1])
+            --print("getting partition (partizion size " .. partitionSize .. ") at x: " .. x .. ", y: " .. y .. " -> ".. floor(x/partitionSize)+1 .. ", " .. floor(y/partitionSize)+1)
+            --print("Partitions size: " .. #partitions[1] .. ", " .. #partitions)
+            local partition = partitions[partitionY][partitionX]
 
             local found = false
             -- local foundText = false

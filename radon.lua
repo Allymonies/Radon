@@ -12,6 +12,7 @@ local bigFont = require("fonts.bigfont")
 local SmolText = require("components.SmolText")
 local smolFont = require("fonts.smolfont")
 local BasicText = require("components.BasicText")
+local Rect = require("components.Rect")
 local RenderCanvas = require("components.RenderCanvas")
 local Core = require("core.ShopState")
 local ShopRunner = require("core.ShopRunner")
@@ -28,11 +29,22 @@ ConfigValidator.validateProducts(products)
 
 local display = Display.new({theme=config.theme})
 
+local function getDisplayedProducts(allProducts, settings)
+    local displayedProducts = {}
+    for _, product in ipairs(allProducts) do
+        if not settings.hideUnavailableProducts or product.quantity > 0 then
+            table.insert(displayedProducts, product)
+        end
+    end
+    return displayedProducts
+end
+
 local Main = Solyd.wrapComponent("Main", function(props)
     local canvas = useCanvas(display)
     local theme = props.config.theme
 
-    header = BigText { display=display, text="Radon Shop", x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
+    local header = BigText { display=display, text="Radon Shop", x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
+
 
     local flatCanvas = {
         header
@@ -41,7 +53,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
     local maxAddrWidth = 0
     local maxQtyWidth = 0
     local maxPriceWidth = 0
-    local shopProducts = props.shopState.products
+    local shopProducts = getDisplayedProducts(props.shopState.products, config.settings)
     local productsHeight = display.bgCanvas.height - 17
     local heightPerProduct = math.floor(productsHeight / #shopProducts)
     local productTextSize
@@ -57,8 +69,13 @@ local Main = Solyd.wrapComponent("Main", function(props)
         productTextSize = theme.formatting.productTextSize
     end
 
+    if #shopProducts > 0 then
+        table.insert(flatCanvas, Rect { display=display, x=1, y=16, width=display.bgCanvas.width, height=1, color=theme.colors.productBgColor })
+    end
+
     for i = 1, #shopProducts do
         local product = shopProducts[i]
+        product.quantity = product.quantity or 0
         if productTextSize == "large" then
             maxAddrWidth = math.max(maxAddrWidth, bigFont:getWidth(product.address .. "@")+2)
             maxQtyWidth = math.max(maxQtyWidth, bigFont:getWidth(tostring(product.quantity))+4)
@@ -93,24 +110,25 @@ local Main = Solyd.wrapComponent("Main", function(props)
             table.insert(flatCanvas, BigText { display=display, text=tostring(product.quantity), x=1, y=17+((i-1)*15), align="center", bg=theme.colors.productBgColor, color=qtyColor, width=maxQtyWidth })
             table.insert(flatCanvas, BigText { display=display, text=product.name, x=maxQtyWidth+1, y=17+((i-1)*15), align=theme.formatting.productNameAlign, bg=theme.colors.productBgColor, color=productNameColor, width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth })
             table.insert(flatCanvas, BigText { display=display, text=tostring(product.price) .. "kst", x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth, y=17+((i-1)*15), align="right", bg=theme.colors.productBgColor, color=theme.colors.priceColor, width=maxPriceWidth })
-            table.insert(flatCanvas, BigText { display=display, text=product.address .. "@", x=display.bgCanvas.width-3-maxAddrWidth, y=17+((i-1)*15), align="center", bg=theme.colors.productBgColor, color=theme.colors.addressColor, width=maxAddrWidth+6 })
+            table.insert(flatCanvas, BigText { display=display, text=product.address .. "@", x=display.bgCanvas.width-3-maxAddrWidth, y=17+((i-1)*15), align="right", bg=theme.colors.productBgColor, color=theme.colors.addressColor, width=maxAddrWidth+4 })
         elseif productTextSize == "medium" then
             table.insert(flatCanvas, SmolText { display=display, text=tostring(product.quantity), x=1, y=17+((i-1)*9), align="center", bg=theme.colors.productBgColor, color=qtyColor, width=maxQtyWidth })
             table.insert(flatCanvas, SmolText { display=display, text=product.name, x=maxQtyWidth+1, y=17+((i-1)*9), align=theme.formatting.productNameAlign, bg=theme.colors.productBgColor, color=productNameColor, width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth })
             table.insert(flatCanvas, SmolText { display=display, text=tostring(product.price) .. "kst", x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth, y=17+((i-1)*9), align="right", bg=theme.colors.productBgColor, color=theme.colors.priceColor, width=maxPriceWidth })
-            table.insert(flatCanvas, SmolText { display=display, text=product.address .. "@", x=display.bgCanvas.width-3-maxAddrWidth, y=17+((i-1)*9), align="center", bg=theme.colors.productBgColor, color=theme.colors.addressColor, width=maxAddrWidth+6 })
+            table.insert(flatCanvas, SmolText { display=display, text=product.address .. "@", x=display.bgCanvas.width-3-maxAddrWidth, y=17+((i-1)*9), align="right", bg=theme.colors.productBgColor, color=theme.colors.addressColor, width=maxAddrWidth+4 })
         else
             table.insert(flatCanvas, BasicText { display=display, text=tostring(product.quantity), x=1, y=6+((i-1)*1), align="center", bg=theme.colors.productBgColor, color=qtyColor, width=maxQtyWidth })
             table.insert(flatCanvas, BasicText { display=display, text=product.name, x=maxQtyWidth+1, y=6+((i-1)*1), align=theme.formatting.productNameAlign, bg=theme.colors.productBgColor, color=productNameColor, width=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth-maxQtyWidth })
             table.insert(flatCanvas, BasicText { display=display, text=tostring(product.price) .. "kst", x=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth, y=6+((i-1)*1), align="right", bg=theme.colors.productBgColor, color=theme.colors.priceColor, width=maxPriceWidth })
-            table.insert(flatCanvas, BasicText { display=display, text=product.address .. "@", x=(display.bgCanvas.width/2)-1-maxAddrWidth, y=6+((i-1)*1), align="center", bg=theme.colors.productBgColor, color=theme.colors.addressColor, width=maxAddrWidth+6 })
+            table.insert(flatCanvas, BasicText { display=display, text=product.address .. "@  ", x=(display.bgCanvas.width/2)-1-maxAddrWidth, y=6+((i-1)*1), align="right", bg=theme.colors.productBgColor, color=theme.colors.addressColor, width=maxAddrWidth+2 })
         end
     end
 
     return _.flat({ _.flat(flatCanvas) }), {
         canvas = {canvas, 1, 1},
         config = props.config or {},
-        shopState = props.shopState or {}
+        shopState = props.shopState or {},
+        products = props.shopState.products
     }
 end)
 

@@ -4,6 +4,10 @@ local configSchema = {
     branding = {
         title = "string"
     },
+    settings = {
+        hideUnavailableProducts = "boolean",
+        pollFrequency = "number",
+    },
     theme = {
         formatting = {
             headerAlign = "enum<'left' | 'center' | 'right'>: alignment",

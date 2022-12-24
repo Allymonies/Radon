@@ -2,6 +2,10 @@ return {
     branding = {
         title = "Radon Shop"
     },
+    settings = {
+        hideUnavailableProducts = false,
+        pollFrequency = 30
+    },
     theme = {
         formatting = {
             headerAlign = "center",

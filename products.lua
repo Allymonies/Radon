@@ -1,14 +1,13 @@
 return {
     {
-        modid = "minecraft:lapis_lazuli",
-        name = "Lapis Lazuli",
+        modid = "minecraft:lapis_block",
+        name = "Lapis Block",
         address = "lapis",
-        price = 1.0,
-        quantity = 999, -- DEBUG ONLY
+        price = 9.0,
         priceOverrides = {
             {
                 currency = "tenebra",
-                price = 1.0
+                price = 18.0
             }
         },
     },
@@ -17,7 +16,6 @@ return {
         name = "Diamond",
         address = "dia",
         price = 5.0,
-        quantity = 0, -- DEBUG ONLY
         priceOverrides = {
             {
                 currency = "tenebra",
@@ -30,7 +28,6 @@ return {
         name = "Gold Ingot",
         address = "gold",
         price = 5.0,
-        quantity = 16, -- DEBUG ONLY
         priceOverrides = {
             {
                 currency = "tenebra",
@@ -43,14 +40,18 @@ return {
         name = "Diamond Pickaxe eff5",
         address = "dpick",
         price = 50.0,
-        quantity = 4,
         predicates = {
             enchantments = {
                 {
-                    fullName = "Efficiency",
-                    level = 5
+                    fullName = "Efficiency V"
                 }
             }
         }
+    },
+    {
+        modid = "scgoodies:lesbian_elytra",
+        name = "Lesbian Elytra",
+        address = "lely",
+        price = 5000.0
     }
 }
