@@ -2,14 +2,14 @@ local Solyd = require("modules.solyd")
 local hooks = require("modules.hooks")
 local useBoundingBox = hooks.useBoundingBox
 
-local BigText = require("components.BigText")
-local bigFont = require("fonts.bigfont")
+local SmolText = require("components.SmolText")
+local smolFont = require("fonts.smolfont")
 
-return Solyd.wrapComponent("Button", function(props)
+return Solyd.wrapComponent("SmolButton", function(props)
     -- local canvas = Solyd.useContext("canvas")
     -- local canvas = useCanvas()
 
-    return BigText {
+    return SmolText {
         display = props.display,
         align = props.align,
         text = props.text,
@@ -20,6 +20,6 @@ return Solyd.wrapComponent("Button", function(props)
         width = props.width,
     }, {
         -- canvas = canvas,
-        aabb = useBoundingBox(props.x, props.y, props.width or bigFont:getWidth(props.text), bigFont.height+6, props.onClick),
+        aabb = useBoundingBox(props.x, props.y, props.width or smolFont:getWidth(props.text), smolFont.height+3, props.onClick),
     }
 end)

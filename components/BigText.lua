@@ -26,7 +26,7 @@ return Solyd.wrapComponent("BigText", function(props)
                 cx = props.width - bigFont:getWidth(props.text) - 2
             end
         end
-        bigFont:write(canvas, props.text, 2 + cx, bgHeight-3, props.color or colors.white)
+        bigFont:write(canvas, props.text, math.max(2, cx), bgHeight-3, props.color or colors.white)
 
         return function()
             canvas:markRect(1, 1, fw, bigFont.height+bgHeight)

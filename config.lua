@@ -4,7 +4,9 @@ return {
     },
     settings = {
         hideUnavailableProducts = false,
-        pollFrequency = 30
+        pollFrequency = 30,
+        categoryCycleFrequency = 20,
+        activityTimeout = 60,
     },
     theme = {
         formatting = {
@@ -24,7 +26,18 @@ return {
             productNameColor = colors.white,
             outOfStockNameColor = colors.lightGray,
             priceColor = colors.lime,
-            addressColor = colors.white
+            addressColor = colors.white,
+            currencyTextColor = colors.white,
+            currency1Color = colors.green,
+            currency2Color = colors.pink,
+            currency3Color = colors.lightBlue,
+            currency4Color = colors.yellow,
+            catagoryTextColor = colors.white,
+            category1Color = colors.pink,
+            category2Color = colors.orange,
+            category3Color = colors.lime,
+            category4Color = colors.lightBlue,
+            activeCategoryColor = colors.black,
         },
         palette = {
             [colors.black] = 0x181818,
@@ -49,7 +62,7 @@ return {
         {
             id = "krist", -- if not krist or tenebra, must supply endpoint
             -- node = "https://krist.dev"
-            host = "kristallie",
+            host = "ksbangelco",
             name = "radon.kst",
             pkey = "",
             pkeyFormat = "raw", -- Either 'raw' or 'kristwallet', defaults to 'raw'

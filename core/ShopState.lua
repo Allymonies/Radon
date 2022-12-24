@@ -12,6 +12,11 @@ function ShopState.new(config, products)
     self.running = false
     self.config = config
     self.products = products
+    self.selectedCurrency = config.currencies[1]
+    self.selectedCategory = 1
+    self.numCategories = 1
+    self.productsChanged = false
+    self.lastTouched = os.epoch("utc")
 
     return self
 end
@@ -52,7 +57,21 @@ local function runShop(state)
     end, function()
         while state.running do
             ScanInventory.updateProductInventory(state.products)
+            if state.config.settings.hideUnavailableProducts then
+                state.productsChanged = true
+            end
             sleep(state.config.settings.pollFrequency)
+        end
+    end, function()
+        while state.running do
+            if os.epoch("utc") > state.lastTouched + (state.config.settings.activityTimeout * 1000) then
+                state.selectedCategory = state.selectedCategory + 1
+                if state.selectedCategory > state.numCategories then
+                    state.selectedCategory = 1
+                end
+                state.productsChanged = true
+            end
+            sleep(state.config.settings.categoryCycleFrequency)
         end
     end)
 end

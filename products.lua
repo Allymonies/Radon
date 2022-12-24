@@ -3,6 +3,7 @@ return {
         modid = "minecraft:lapis_block",
         name = "Lapis Block",
         address = "lapis",
+        category = "ore",
         price = 9.0,
         priceOverrides = {
             {
@@ -15,6 +16,7 @@ return {
         modid = "minecraft:diamond",
         name = "Diamond",
         address = "dia",
+        category = "ore",
         price = 5.0,
         priceOverrides = {
             {
@@ -27,6 +29,7 @@ return {
         modid = "minecraft:gold_ingot",
         name = "Gold Ingot",
         address = "gold",
+        category = "ore",
         price = 5.0,
         priceOverrides = {
             {
@@ -39,6 +42,7 @@ return {
         modid = "minecraft:diamond_pickaxe",
         name = "Diamond Pickaxe eff5",
         address = "dpick",
+        category = "tool",
         price = 50.0,
         predicates = {
             enchantments = {
