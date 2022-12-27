@@ -113,10 +113,6 @@ local Main = Solyd.wrapComponent("Main", function(props)
 
     local header = BigText { display=display, text="Radon Shop", x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
 
-    if props.shopState.productsChanged then
-        canvas:markRect(1, 1, canvas.width, canvas.height)
-    end
-
     local flatCanvas = {
         header
     }
@@ -205,71 +201,75 @@ local Main = Solyd.wrapComponent("Main", function(props)
     end
 
     local currencyX = 3
-    for i = 1, #props.config.currencies do
-        local symbol = getCurrencySymbol(props.config.currencies[i], productTextSize)
-        local symbolSize = bigFont:getWidth(symbol)+6
-        local bgColor
-        if i % 4 == 1 then
-            bgColor = theme.colors.currency1Color
-        elseif i % 4 == 2 then
-            bgColor = theme.colors.currency2Color
-        elseif i % 4 == 3 then
-            bgColor = theme.colors.currency3Color
-        elseif i % 4 == 0 then
-            bgColor = theme.colors.currency4Color
-        end
-        table.insert(flatCanvas, Button {
-            display = display,
-            align = "center",
-            text = symbol,
-            x = currencyX,
-            y = 1,
-            bg = bgColor,
-            color = theme.colors.currencyTextColor,
-            width = symbolSize,
-            onClick = function()
-                props.shopState.selectedCurrency = props.config.currencies[i]
-                props.shopState.lastTouched = os.epoch("utc")
+    if #props.config.currencies > 1 then
+        for i = 1, #props.config.currencies do
+            local symbol = getCurrencySymbol(props.config.currencies[i], productTextSize)
+            local symbolSize = bigFont:getWidth(symbol)+6
+            local bgColor
+            if i % 4 == 1 then
+                bgColor = theme.colors.currency1Color
+            elseif i % 4 == 2 then
+                bgColor = theme.colors.currency2Color
+            elseif i % 4 == 3 then
+                bgColor = theme.colors.currency3Color
+            elseif i % 4 == 0 then
+                bgColor = theme.colors.currency4Color
             end
-        })
-        currencyX = currencyX + symbolSize + 2
+            table.insert(flatCanvas, Button {
+                display = display,
+                align = "center",
+                text = symbol,
+                x = currencyX,
+                y = 1,
+                bg = bgColor,
+                color = theme.colors.currencyTextColor,
+                width = symbolSize,
+                onClick = function()
+                    props.shopState.selectedCurrency = props.config.currencies[i]
+                    props.shopState.lastTouched = os.epoch("utc")
+                end
+            })
+            currencyX = currencyX + symbolSize + 2
+        end
     end
 
     local categoryX = display.bgCanvas.width - 2
-    for i = #categories, 1, -1 do
-        local category = categories[i]
-        local categoryName = category.name
-        local categoryColor
-        if i == selectedCategory then
-            categoryColor = theme.colors.activeCategoryColor
-            categoryName = "[" .. categoryName .. "]"
-        elseif i % 4 == 1 then
-            categoryColor = theme.colors.category1Color
-        elseif i % 4 == 2 then
-            categoryColor = theme.colors.category2Color
-        elseif i % 4 == 3 then
-            categoryColor = theme.colors.category3Color
-        elseif i % 4 == 0 then
-            categoryColor = theme.colors.category4Color
-        end
-        local categoryWidth = smolFont:getWidth(categoryName)+6
-        categoryX = categoryX - categoryWidth - 2
-
-        table.insert(flatCanvas, SmolButton {
-            display = display,
-            align = "center",
-            text = categoryName,
-            x = categoryX,
-            y = 4,
-            bg = categoryColor,
-            color = theme.colors.categoryTextColor,
-            width = categoryWidth,
-            onClick = function()
-                props.shopState.selectedCategory = i
-                props.shopState.lastTouched = os.epoch("utc")
-                canvas:markRect(1, 16, canvas.width, canvas.height-16)
+    if #categories > 1 then
+        for i = #categories, 1, -1 do
+            local category = categories[i]
+            local categoryName = category.name
+            local categoryColor
+            if i == selectedCategory then
+                categoryColor = theme.colors.activeCategoryColor
+                categoryName = "[" .. categoryName .. "]"
+            elseif i % 4 == 1 then
+                categoryColor = theme.colors.category1Color
+            elseif i % 4 == 2 then
+                categoryColor = theme.colors.category2Color
+            elseif i % 4 == 3 then
+                categoryColor = theme.colors.category3Color
+            elseif i % 4 == 0 then
+                categoryColor = theme.colors.category4Color
             end
-        })
+            local categoryWidth = smolFont:getWidth(categoryName)+6
+            categoryX = categoryX - categoryWidth - 2
+
+            table.insert(flatCanvas, SmolButton {
+                display = display,
+                align = "center",
+                text = categoryName,
+                x = categoryX,
+                y = 4,
+                bg = categoryColor,
+                color = theme.colors.categoryTextColor,
+                width = categoryWidth,
+                onClick = function()
+                    props.shopState.selectedCategory = i
+                    props.shopState.lastTouched = os.epoch("utc")
+                    -- canvas:markRect(1, 16, canvas.width, canvas.height-16)
+                end
+            })
+        end
     end
 
     return _.flat({ _.flat(flatCanvas) }), {
@@ -309,7 +309,11 @@ local function diffCanvasStack(newStack)
 
     -- Mark rectangle of removed canvases on bgCanvas (TODO: using bgCanvas is a hack)
     for _, canvas in pairs(removed) do
-        display.bgCanvas:dirtyRect(canvas[2], canvas[3], canvas[1].width, canvas[1].height)
+        if canvas[1].brand == "TextCanvas" then
+            display.bgCanvas:dirtyRect(canvas[2], canvas[3], canvas[1].width*2, canvas[1].height*3)
+        else
+            display.bgCanvas:dirtyRect(canvas[2], canvas[3], canvas[1].width, canvas[1].height)
+        end
     end
 
     -- For each kept canvas, mark the bounds if the new bounds are different
@@ -319,8 +323,13 @@ local function diffCanvasStack(newStack)
         if oldCanvas then
             if oldCanvas[2] ~= newCanvas[2] or oldCanvas[3] ~= newCanvas[3] then
                 -- TODO: Optimize this?
-                display.bgCanvas:dirtyRect(oldCanvas[2], oldCanvas[3], oldCanvas[1].width, oldCanvas[1].height)
-                display.bgCanvas:dirtyRect(newCanvas[2], newCanvas[3], newCanvas[1].width, newCanvas[1].height)
+                if oldCanvas[1].brand == "TextCanvas" then
+                    display.bgCanvas:dirtyRect(oldCanvas[2], oldCanvas[3], oldCanvas[1].width*2, oldCanvas[1].height*3)
+                    display.bgCanvas:dirtyRect(newCanvas[2], newCanvas[3], newCanvas[1].width*2, newCanvas[1].height*3)
+                else
+                    display.bgCanvas:dirtyRect(oldCanvas[2], oldCanvas[3], oldCanvas[1].width, oldCanvas[1].height)
+                    display.bgCanvas:dirtyRect(newCanvas[2], newCanvas[3], newCanvas[1].width, newCanvas[1].height)
+                end
             end
         end
     end
@@ -331,8 +340,12 @@ end
 
 local shopState = Core.ShopState.new(config, products)
 
+local Profiler = require("profile")
+
+
 local deltaTimer = os.startTimer(0)
 ShopRunner.launchShop(shopState, function()
+    -- Profiler:activate()
     while true do
         tree = Solyd.render(tree, Main {t = t, config = config, shopState = shopState})
 
@@ -341,7 +354,9 @@ ShopRunner.launchShop(shopState, function()
         diffCanvasStack(context.canvas)
 
         local t1 = os.epoch("utc")
-        display.ccCanvas:composite(unpack(context.canvas))
+        local cstack = { {display.bgCanvas, 1, 1}, unpack(context.canvas) }
+        -- cstack[#cstack+1] = {display.textCanvas, 1, 1}
+        display.ccCanvas:composite(unpack(cstack))
         display.ccCanvas:outputDirty(display.mon)
         local t2 = os.epoch("utc")
         -- print("Render time: " .. (t2-t1) .. "ms")
@@ -362,6 +377,13 @@ ShopRunner.launchShop(shopState, function()
             if node then
                 node.onClick()
             end
+        elseif name == "key" then
+            if e[2] == keys.q then
+                break
+            end
         end
     end
+    -- Profiler:deactivate()
 end)
+
+-- Profiler:write_results(nil, "profile.txt")

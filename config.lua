@@ -5,7 +5,7 @@ return {
     settings = {
         hideUnavailableProducts = false,
         pollFrequency = 30,
-        categoryCycleFrequency = 20,
+        categoryCycleFrequency = -1,
         activityTimeout = 60,
     },
     theme = {

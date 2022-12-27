@@ -64,14 +64,14 @@ local function runShop(state)
         end
     end, function()
         while state.running do
-            if os.epoch("utc") > state.lastTouched + (state.config.settings.activityTimeout * 1000) then
+            if state.config.settings.categoryCycleFrequency > 0 and os.epoch("utc") > state.lastTouched + (state.config.settings.activityTimeout * 1000) then
                 state.selectedCategory = state.selectedCategory + 1
                 if state.selectedCategory > state.numCategories then
                     state.selectedCategory = 1
                 end
                 state.productsChanged = true
             end
-            sleep(state.config.settings.categoryCycleFrequency)
+            sleep(math.min(1, state.config.settings.categoryCycleFrequency))
         end
     end)
 end

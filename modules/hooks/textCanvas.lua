@@ -26,12 +26,17 @@ local Solyd = require("modules.solyd")
 local canvases = require("modules.canvas")
 
 ---@return TextCanvas
-local function useTextCanvas(display)
+local function useTextCanvas(display, w, h)
     local c = Solyd.useMemo(function()
-        return display.textCanvas
-    end, {display})
+        return canvases.TextCanvas(w, h)
+    end, {display, w, h})
 
     return c
+    -- local c = Solyd.useMemo(function()
+    --     return display.textCanvas
+    -- end, {display})
+
+    -- return c
 end
 
 return useTextCanvas

@@ -4,7 +4,7 @@ local useTextCanvas = hooks.useTextCanvas
 
 return Solyd.wrapComponent("BasicText", function(props)
     local fw = props.width or #props.text
-    local canvas = useTextCanvas(props.display)
+    local canvas = useTextCanvas(props.display, fw*2, 1)
 
     Solyd.useEffect(function()
         local text = props.text
@@ -19,13 +19,13 @@ return Solyd.wrapComponent("BasicText", function(props)
                 text = text .. string.rep(" ", props.width - #text)
             end
         end
-        canvas:write(text, props.x, props.y, props.color or colors.white, props.bg or colors.black)
+        canvas:write(text, 1, 1, props.color or colors.white, props.bg or colors.black)
 
         return function()
-            canvas:markText(text, props.x, props.y)
+            canvas:markText(text, 1, 1)
         end
-    end, { canvas, props.display, props.align, text, props.color, props.bg, fw })
+    end, { canvas, props.display, props.align, props.text, props.color, props.bg, fw })
 
     local x = props.right and props.x-canvas.width+1 or props.x
-    return nil, { canvas = { canvas, x, props.y } }
+    return nil, { canvas = { canvas, x*2-1, props.y*3-2 } }
 end)

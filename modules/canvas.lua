@@ -335,7 +335,7 @@ function TextCanvas.new(width, height)
     local self = setmetatable({__opaque = true}, TextCanvas_mt)
     self.width = width
     self.height = height
-
+    self.brand = "TextCanvas"
     self.canvas = {}
     for y = 1, height do
         self.canvas[y] = {}
@@ -491,43 +491,75 @@ function TeletextCanvas:composite(...)
     local queuedDirty = {}
     local c = 0
     for _, other in ipairs(others) do
-        -- local isPixel = PixelCanvas.is(other)
+        
         local ocanvas, ox, oy = other[1], other[2]-1, other[3]-1
+        local isPixel = ocanvas.brand ~= "TextCanvas"
         if ocanvas.allDirty then
             for y = 1, ocanvas.height do
                 for x = 1, ocanvas.width do
-                    local tx = x+ox
-                    local ty = y+oy
-                    if tx >= 1 and tx <= self.width*2 and ty >= 1 and ty <= self.height*3 then
-                        queuedDirty[ty] = queuedDirty[ty] or {}
-                        queuedDirty[ty][tx] = true
-                        c = c + 1
+                    if isPixel then
+                        local tx = x+ox
+                        local ty = y+oy
+                        if tx >= 1 and tx <= self.width*2 and ty >= 1 and ty <= self.height*3 then
+                            queuedDirty[ty] = queuedDirty[ty] or {}
+                            queuedDirty[ty][tx] = true
+                            c = c + 1
+                        end
+                    else
+                        local tx = x*2-1 + ox
+                        local ty = y*3-2 + oy
+                        -- print(ty)
+                        if tx >= 1 and tx <= self.width*2 and ty >= 1 and ty <= self.height*3 then
+                            queuedDirty[ty] = queuedDirty[ty] or {}
+                            queuedDirty[ty][tx] = true
+                            c = c + 1
+                        end
                     end
                 end
             end
         else
             for y, row in pairs(ocanvas.dirty) do
                 for x, _ in pairs(row) do
-                    -- if isPixel then
-                    local tx = x+ox
-                    local ty = y+oy
-                    if tx >= 1 and tx <= self.width*2 and ty >= 1 and ty <= self.height*3 then
-                        queuedDirty[ty] = queuedDirty[ty] or {}
-                        queuedDirty[ty][tx] = true
-                        c = c + 1
+                    if isPixel then
+                        local tx = x+ox
+                        local ty = y+oy
+                        if tx >= 1 and tx <= self.width*2 and ty >= 1 and ty <= self.height*3 then
+                            queuedDirty[ty] = queuedDirty[ty] or {}
+                            queuedDirty[ty][tx] = true
+                            c = c + 1
+                        end
+                    else
+                        local tx = x*2-1 + ox
+                        local ty = y*3-2 + oy
+                        -- print(ty)
+                        if tx >= 1 and tx <= self.width*2 and ty >= 1 and ty <= self.height*3 then
+                            queuedDirty[ty] = queuedDirty[ty] or {}
+                            queuedDirty[ty][tx] = true
+                            c = c + 1
+                        end
+                        -- print(y)
+                        -- for gayY = y-10,y+10 do
+                        --     if gayY > 1 and gayY <= #ocanvas.dirty then
+                        --         for gayX = x-10,x+10 do
+                        --             if gayX > 1 and gayX <= #row then
+                        --                 queuedDirty[y*3] = queuedDirty[y*3] or {}
+                        --                 queuedDirty[y*3][x*2] = true
+                        --                 queuedDirty[y*3][x*2-1] = true
+                        --                 queuedDirty[y*3-1] = queuedDirty[y*3-1] or {}
+                        --                 queuedDirty[y*3-1][x*2] = true
+                        --                 queuedDirty[y*3-1][x*2-1] = true
+                        --                 queuedDirty[y*3-2] = queuedDirty[y*3-2] or {}
+                        --                 queuedDirty[y*3-2][x*2] = true
+                        --                 queuedDirty[y*3-2][x*2-1] = true
+                        --             end
+                        --         end
+                        --     end
+                        -- end
                     end
 
                     -- else
                     --     -- TODO: ewwwwwwww
-                    --     queuedDirty[y*3] = queuedDirty[y*3] or {}
-                    --     queuedDirty[y*3][x*2] = true
-                    --     queuedDirty[y*3][x*2-1] = true
-                    --     queuedDirty[y*3-1] = queuedDirty[y*3-1] or {}
-                    --     queuedDirty[y*3-1][x*2] = true
-                    --     queuedDirty[y*3-1][x*2-1] = true
-                    --     queuedDirty[y*3-2] = queuedDirty[y*3-2] or {}
-                    --     queuedDirty[y*3-2][x*2] = true
-                    --     queuedDirty[y*3-2][x*2-1] = true
+                        
                     -- end
                 end
             end
@@ -568,39 +600,62 @@ function TeletextCanvas:composite(...)
                                 self.dirty[targetY][targetX] = true
                             end
 
+                            if self.canvas[targetY].direct[targetX] then
+                                self.canvas[targetY].direct[targetX] = false
+                                self.dirty[targetY][targetX] = true
+                            end
                             break
                         end
                     end
                 t2 = os.epoch("utc")
                 else ---@cast other TextCanvas
-                    local otherRow = otherCanvas.canvas[targetY]
-                    local otherT = otherRow.t[targetX]
-                    local otherC = otherRow.c[targetX]
-                    local otherB = otherRow.b[targetX]
-                    if otherT then
-                        found = true
-                        foundText = true
+                    -- print( targetX .. ", " .. targetY .. ": " .. ox .. ", " .. oy .. " -> " .. x .. ", " .. y)
+                    local ty = ceil((y-oy+1)/3) --ceil(targetY - oy / 3)
+                    local tx = ceil((x-ox+1)/2) --ceil(targetX - ox / 2)
+                    -- print(tx .. " " .. ty)
+                    -- if ty == 1 then
+                        -- print("fuck")
+                        -- print(#otherCanvas.canvas)
+                        -- print(#otherCanvas.canvas[ty].t)
+                        -- sleep(1)
+                    -- end
+                    if otherCanvas.canvas[ty] and otherCanvas.canvas[ty].c[tx] then
+                        -- print("found text")
+                        local otherRow = otherCanvas.canvas[ty]
+                        local otherT = otherRow.t[tx]
+                        local otherC = otherRow.c[tx]
+                        local otherB = otherRow.b[tx]
+                        if otherT then
+                            found = true
+                            foundText = true
 
-                        local currRow = self.canvas[targetY]
-                        local currT = currRow.t[targetX]
-                        local currC = currRow.c[targetX]
-                        local currB = currRow.b[targetX]
+                            local currRow = self.canvas[targetY]
+                            local currT = currRow.t[targetX]
+                            local currC = currRow.c[targetX]
+                            local currB = currRow.b[targetX]
 
-                        if otherT ~= currT or otherC ~= currC or otherB ~= currB then
-                            currRow.t[targetX] = otherT
-                            currRow.c[targetX] = otherC
-                            currRow.b[targetX] = otherB
-                            currRow.direct[targetX] = true
-                            self.dirty[targetY][targetX] = false -- Already processed
+                            if otherT ~= currT or otherC ~= currC or otherB ~= currB then
+                                currRow.t[targetX] = otherT
+                                currRow.c[targetX] = otherC
+                                currRow.b[targetX] = otherB
+                                currRow.direct[targetX] = true
+                                self.dirty[targetY][targetX] = false -- Already processed
 
-                            local dirtyRow = self.dirtyRows[targetY] or {}
-                            local minX, maxX = dirtyRow[1], dirtyRow[2]
-                            minX = minX and min(minX, targetX) or targetX
-                            maxX = maxX and max(maxX, targetX) or targetX
-                            self.dirtyRows[targetY] = { minX, maxX }
+                                local dirtyRow = self.dirtyRows[targetY] or {}
+                                local minX, maxX = dirtyRow[1], dirtyRow[2]
+                                minX = minX and min(minX, targetX) or targetX
+                                maxX = maxX and max(maxX, targetX) or targetX
+                                self.dirtyRows[targetY] = { minX, maxX }
+                            end
+
+                            break
+                        else
+                            local currRow = self.canvas[targetY]
+                            currRow.direct[targetX] = false
                         end
-
-                        break
+                    else
+                        -- local currRow = self.canvas[targetY]
+                        -- currRow.direct[targetX] = false
                     end
                 end
             end
@@ -608,6 +663,7 @@ function TeletextCanvas:composite(...)
             if not found then
                 self.pixelCanvas.canvas[y][x] = self.clear
                 self.dirty[targetY][targetX] = true
+                self.canvas[targetY].direct[targetX] = false
             end
 
             -- if not foundText then
