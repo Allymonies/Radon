@@ -57,6 +57,10 @@ local function validateReturnAddress(address)
     return true
 end
 
+local function isRelative(name)
+    return name == "top" or name == "bottom" or name == "left" or name == "right" or name == "front" or name == "back"
+end
+
 local function refund(currency, address, meta, value, message, error)
     message = message or "Here is your refund!"
     local returnTo = address
@@ -69,6 +73,68 @@ local function refund(currency, address, meta, value, message, error)
         currency.krypton.ws:makeTransaction(returnTo, value, "message=" .. message)
     else
         currency.krypton.ws:makeTransaction(returnTo, value, "error=" .. message)
+    end
+end
+
+local function handlePurchase(transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
+    local purchasedProduct = nil
+    for _, product in ipairs(state.products) do
+        if product.address:lower() == sentMetaname:lower() then
+            purchasedProduct = product
+            break
+        end
+    end
+    if purchasedProduct then
+        local productPrice = Pricing.getProductPrice(purchasedProduct, transactionCurrency)
+        local amountPurchased = math.floor(transaction.value / productPrice)
+        if amountPurchased > 0 then
+            if purchasedProduct.quantity and purchasedProduct.quantity > 0 then
+                local productSources, available = ScanInventory.findProductItems(state.products, purchasedProduct, amountPurchased)
+                local refundAmount = transaction.value - (available * productPrice)
+                print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.name .. " (refund " .. refundAmount .. ")")
+                if available > 0 then
+                    for _, productSource in ipairs(productSources) do
+                        if isRelative(state.config.peripherals.outputChest) then
+                            -- Move to self first
+                            if not turtle then
+                                error("Relative output but not a turtle!")
+                            end
+                            peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.self, productSource.slot, productSource.amount, 1)
+                            peripheral.call(state.config.peripherals.outputChest, "pullItems", state.config.peripherals.selfRelativeOutput, productSource.slot, productSource.amount, 1)
+                            peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
+                        elseif state.config.peripherals.outputChest == "self" then
+                            if not turtle then
+                                error("Self output but not a turtle!")
+                            end
+                            peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.self, productSource.slot, productSource.amount, 1)
+                            if state.config.settings.dropDirection == "forward" then
+                                turtle.drop(productSource.amount)
+                            elseif state.config.settings.dropDirection == "up" then
+                                turtle.dropUp(productSource.amount)
+                            elseif state.config.settings.dropDirection == "down" then
+                                turtle.dropDown(productSource.amount)
+                            else
+                                error("Invalid drop direction: " .. state.config.settings.dropDirection)
+                            end
+                        else
+                            peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
+                            peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
+                        end
+                    end
+                    if refundAmount > 0 then
+                        refund(transactionCurrency, transaction.from, meta, refundAmount, "Here is the funds remaining after your purchase!")
+                    end
+                else
+                    refund(transactionCurrency, transaction.from, meta, transaction.value, "Sorry, that item is out of stock!")
+                end
+            else
+                refund(transactionCurrency, transaction.from, meta, transaction.value, "Sorry, that item is out of stock!")
+            end
+        else
+            refund(transactionCurrency, transaction.from, meta, transaction.value, "You must purchase at least one of this product!", true)
+        end
+    else
+        refund(transactionCurrency, transaction.from, meta, transaction.value, "Must supply a valid product to purchase!", true)
     end
 end
 
@@ -118,40 +184,12 @@ local function runShop(state)
                 if sentName and sentName:lower() == transactionCurrency.name:lower() then
                     local meta = parseMeta(transaction.metadata)
                     if sentMetaname then
-                        local purchasedProduct = nil
-                        for _, product in ipairs(state.products) do
-                            if product.address:lower() == sentMetaname:lower() then
-                                purchasedProduct = product
-                                break
-                            end
-                        end
-                        if purchasedProduct then
-                            local productPrice = Pricing.getProductPrice(purchasedProduct, transactionCurrency)
-                            local amountPurchased = math.floor(transaction.value / productPrice)
-                            if amountPurchased > 0 then
-                                if purchasedProduct.quantity and purchasedProduct.quantity > 0 then
-                                    local productSources, available = ScanInventory.findProductItems(state.products, purchasedProduct, amountPurchased)
-                                    local refundAmount = transaction.value - (available * productPrice)
-                                    print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.name .. " (refund " .. refundAmount .. ")")
-                                    if available > 0 then
-                                        for _, productSource in ipairs(productSources) do
-                                            peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
-                                            peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, "up")
-                                        end
-                                        if refundAmount > 0 then
-                                            refund(transactionCurrency, transaction.from, meta, refundAmount, "Here is the funds remaining after your purchase!")
-                                        end
-                                    else
-                                        refund(transactionCurrency, transaction.from, meta, transaction.value, "Sorry, that item is out of stock!")
-                                    end
-                                else
-                                    refund(transactionCurrency, transaction.from, meta, transaction.value, "Sorry, that item is out of stock!")
-                                end
-                            else
-                                refund(transactionCurrency, transaction.from, meta, transaction.value, "You must purchase at least one of this product!", true)
-                            end
+                        success, err = pcall(handlePurchase, transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
+                        if success then
+                            -- Success :D
                         else
-                            refund(transactionCurrency, transaction.from, meta, transaction.value, "Must supply a valid product to purchase!", true)
+                            refund(transactionCurrency, transaction.from, meta, transaction.value, "An error occurred while processing your purchase!", true)
+                            error(err)
                         end
                     else
                         refund(transactionCurrency, transaction.from, meta, transaction.value, "Must supply a product to purchase!", true)

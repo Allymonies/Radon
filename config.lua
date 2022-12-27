@@ -7,6 +7,7 @@ return {
         pollFrequency = 30,
         categoryCycleFrequency = -1,
         activityTimeout = 60,
+        dropDirection = "forward"
     },
     theme = {
         formatting = {
@@ -84,8 +85,14 @@ return {
     },
     peripherals = {
         monitor = nil,
+        self = "west", -- Cardinal direction or network name of the turtle
+        -- relative to storage chest(s) used
+        -- only required if output chest is "self"
+        -- or a relative position
+        -- ex: "west", "turtle_1"
+        selfRelativeOutput = nil, -- Same as above but for output chest
         exchangeChest = nil,
-        outputChest = "minecraft:chest_3",
+        outputChest = "self", -- Chest peripheral or self
     },
     exchange = {
         enabled = true,

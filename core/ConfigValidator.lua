@@ -9,6 +9,7 @@ local configSchema = {
         pollFrequency = "number",
         categoryCycleFrequency = "number",
         activityTimeout = "number",
+        dropDirection = "enum<'forward' | 'up' | 'down' | 'north' | 'south' | 'east' | 'west'>: direction"
     },
     theme = {
         formatting = {
@@ -75,8 +76,10 @@ local configSchema = {
     },
     peripherals = {
         monitor = "string?",
-        exchangeChest = "networked_chest?",
-        outputChest = "networked_chest",
+        self = "string?",
+        selfRelativeOutput = "string?",
+        exchangeChest = "chest?",
+        outputChest = "chest",
     },
     exchange = {
         enabled = "boolean",
@@ -167,26 +170,31 @@ local function validate(config, schema, path)
                             error("Config value " .. subpath .. " must be a color")
                         end
                     end
-                    if v == "networked_chest" then
+                    if v == "chest" then
                         if type(config[k]) ~= "string" then
                             error("Config value " .. subpath .. " must be a networked chest")
                         end
-                        if config[k] == "left" or config[k] == "right" or config[k] == "front" or config[k] == "back" or config[k] == "top" or config[k] == "bottom" then
+                        if not turtle and (config[k] == "left" or config[k] == "right" or config[k] == "front" or config[k] == "back" or config[k] == "top" or config[k] == "bottom") then
                             error("Config value " .. subpath .. " must not be a relative position")
                         end
-                        local chestMethods = peripheral.getMethods(config[k])
-                        if not config[k] then
-                            error("Config value " .. subpath .. " must refer to a valid peripheral")
+                        if not turtle and config[k] == "self" then
+                            error("Config value " .. subpath .. " can only be self for turtles")
                         end
-                        local hasDropMethod = false
-                        for i = 1, #chestMethods do
-                            if chestMethods[i] == "drop" then
-                                hasDropMethod = true
-                                break
+                        if config[k] ~= "self" then
+                            local chestMethods = peripheral.getMethods(config[k])
+                            if not chestMethods then
+                                error("Config value " .. subpath .. " must refer to a valid peripheral")
                             end
-                        end
-                        if not hasDropMethod then
-                            error("Config value " .. subpath .. " must refer to a peripheral with an inventory")
+                            local hasDropMethod = false
+                            for i = 1, #chestMethods do
+                                if chestMethods[i] == "drop" then
+                                    hasDropMethod = true
+                                    break
+                                end
+                            end
+                            if not hasDropMethod then
+                                error("Config value " .. subpath .. " must refer to a peripheral with an inventory")
+                            end
                         end
                     end
                     if v == "boolean" and type(config[k]) ~= "boolean" then
