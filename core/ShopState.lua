@@ -121,6 +121,7 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                             peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
                         end
                     end
+                    purchasedProduct.quantity = purchasedProduct.quantity - available
                     if refundAmount > 0 then
                         refund(transactionCurrency, transaction.from, meta, refundAmount, "Here is the funds remaining after your purchase!")
                     end

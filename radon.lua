@@ -104,6 +104,11 @@ local Main = Solyd.wrapComponent("Main", function(props)
         header
     }
 
+    if props.shopState.selectedCurrency then
+        local footer = SmolText { display=display, text="/pay <product>@" .. props.shopState.selectedCurrency.name .. " <amt>", x=1, y=display.bgCanvas.height-smolFont.height-4, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
+        table.insert(flatCanvas, footer)
+    end
+
     local maxAddrWidth = 0
     local maxQtyWidth = 0
     local maxPriceWidth = 0
@@ -112,7 +117,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
     local selectedCategory = props.shopState.selectedCategory
     local catName = categories[selectedCategory].name
     local shopProducts = getDisplayedProducts(categories[selectedCategory].products, config.settings)
-    local productsHeight = display.bgCanvas.height - 17
+    local productsHeight = display.bgCanvas.height - 17 - smolFont.height - 4
     local heightPerProduct = math.floor(productsHeight / #shopProducts)
     local productTextSize
     if theme.formatting.productTextSize == "auto" then

@@ -14,6 +14,7 @@ local configSchema = {
     theme = {
         formatting = {
             headerAlign = "enum<'left' | 'center' | 'right'>: alignment",
+            footerAlign = "enum<'left' | 'center' | 'right'>: alignment",
             productNameAlign = "enum<'left' | 'center' | 'right'>: alignment",
             productTextSize = "enum<'small' | 'medium' | 'large' | 'auto'>: text size",
         },
@@ -21,6 +22,8 @@ local configSchema = {
             bgColor = "color",
             headerBgColor = "color",
             headerColor = "color",
+            footerBgColor = "color",
+            footerColor = "color",
             productBgColor = "color",
             outOfStockQtyColor = "color",
             lowQtyColor = "color",

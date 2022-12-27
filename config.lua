@@ -12,6 +12,7 @@ return {
     theme = {
         formatting = {
             headerAlign = "center",
+            footerAlign = "center",
             productNameAlign = "center",
             productTextSize = "auto"
         },
@@ -19,6 +20,8 @@ return {
             bgColor = colors.lightGray,
             headerBgColor = colors.red,
             headerColor = colors.white,
+            footerBgColor = colors.red,
+            footerColor = colors.white,
             productBgColor = colors.blue,
             outOfStockQtyColor = colors.red,
             lowQtyColor = colors.orange,
