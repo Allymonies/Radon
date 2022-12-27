@@ -90,7 +90,7 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
         if amountPurchased > 0 then
             if purchasedProduct.quantity and purchasedProduct.quantity > 0 then
                 local productSources, available = ScanInventory.findProductItems(state.products, purchasedProduct, amountPurchased)
-                local refundAmount = transaction.value - (available * productPrice)
+                local refundAmount = math.floor(transaction.value - (available * productPrice))
                 print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.name .. " (refund " .. refundAmount .. ")")
                 if available > 0 then
                     for _, productSource in ipairs(productSources) do
