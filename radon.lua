@@ -17,6 +17,7 @@ local BasicText = require("components.BasicText")
 local Rect = require("components.Rect")
 local RenderCanvas = require("components.RenderCanvas")
 local Core = require("core.ShopState")
+local Pricing = require("core.Pricing")
 local ShopRunner = require("core.ShopRunner")
 local ConfigValidator = require("core.ConfigValidator")
 
@@ -41,20 +42,6 @@ local function getDisplayedProducts(allProducts, settings)
         end
     end
     return displayedProducts
-end
-
-local function getProductPrice(product, currency)
-    local price = product.price / currency.value
-    if product.priceOverrides then
-        for i = 1, #product.priceOverrides do
-            local override = product.priceOverrides[i]
-            if override.currency == currency.id then
-                price = override.price
-                break
-            end
-        end
-    end
-    return price
 end
 
 local function getCurrencySymbol(currency, productTextSize)
@@ -149,7 +136,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
     for i = 1, #shopProducts do
         local product = shopProducts[i]
         product.quantity = product.quantity or 0
-        local productPrice = getProductPrice(product, props.shopState.selectedCurrency)
+        local productPrice = Pricing.getProductPrice(product, props.shopState.selectedCurrency)
         if productTextSize == "large" then
             maxAddrWidth = math.max(maxAddrWidth, bigFont:getWidth(product.address .. "@")+2)
             maxQtyWidth = math.max(maxQtyWidth, bigFont:getWidth(tostring(product.quantity))+4)
@@ -169,7 +156,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
         -- Display products in format:
         -- <quantity> <name> <price> <address>
         product.quantity = product.quantity or 0
-        local productPrice = getProductPrice(product, props.shopState.selectedCurrency)
+        local productPrice = Pricing.getProductPrice(product, props.shopState.selectedCurrency)
         local qtyColor = theme.colors.normalQtyColor
         if product.quantity == 0 then
             qtyColor = theme.colors.outOfStockQtyColor

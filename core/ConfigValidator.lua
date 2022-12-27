@@ -75,8 +75,8 @@ local configSchema = {
     },
     peripherals = {
         monitor = "string?",
-        exchangeChest = "string?",
-        outputChest = "string?",
+        exchangeChest = "networked_chest?",
+        outputChest = "networked_chest",
     },
     exchange = {
         enabled = "boolean",
@@ -165,6 +165,28 @@ local function validate(config, schema, path)
                         m,n = math.frexp(config[k])
                         if m ~= 0.5 or n < 1 or n > 16 then
                             error("Config value " .. subpath .. " must be a color")
+                        end
+                    end
+                    if v == "networked_chest" then
+                        if type(config[k]) ~= "string" then
+                            error("Config value " .. subpath .. " must be a networked chest")
+                        end
+                        if config[k] == "left" or config[k] == "right" or config[k] == "front" or config[k] == "back" or config[k] == "top" or config[k] == "bottom" then
+                            error("Config value " .. subpath .. " must not be a relative position")
+                        end
+                        local chestMethods = peripheral.getMethods(config[k])
+                        if not config[k] then
+                            error("Config value " .. subpath .. " must refer to a valid peripheral")
+                        end
+                        local hasDropMethod = false
+                        for i = 1, #chestMethods do
+                            if chestMethods[i] == "drop" then
+                                hasDropMethod = true
+                                break
+                            end
+                        end
+                        if not hasDropMethod then
+                            error("Config value " .. subpath .. " must refer to a peripheral with an inventory")
                         end
                     end
                     if v == "boolean" and type(config[k]) ~= "boolean" then

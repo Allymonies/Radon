@@ -1,5 +1,6 @@
 local Krypton = require("Krypton")
 local ScanInventory = require("core.inventory.ScanInventory")
+local Pricing = require("core.Pricing")
 
 ---@class ShopState
 ---@field running boolean
@@ -25,6 +26,52 @@ local function waitForAnimation(uid)
     coroutine.yield("animationFinished", uid)
 end
 
+local function parseMeta(transactionMeta)
+    local meta = {}
+    for metaEntry in transactionMeta:gmatch("([^;]+)") do
+        if metaEntry:find("=") then
+            local key, value = metaEntry:match("([^=]+)=([^=]+)")
+            meta[key] = value
+        else
+            meta[metaEntry] = true
+        end
+    end
+    return meta
+end
+
+local function validateReturnAddress(address)
+    -- Primitive validation, will accept all valid addresses at the expense of some false positives
+    if address:find("@") then
+        local metaname, name = address:match("([^@]+)@([^@]+).%w+")
+        if not metaname or not name then
+            return false
+        end
+        if #name > 64 or #metaname > 32 then
+            return false
+        end
+    else
+        if #address > 64 then
+            return false
+        end
+    end
+    return true
+end
+
+local function refund(currency, address, meta, value, message, error)
+    message = message or "Here is your refund!"
+    local returnTo = address
+    if meta and meta["return"] then
+        if validateReturnAddress(meta["return"]) then
+            returnTo = meta["return"]
+        end
+    end
+    if not error then
+        currency.krypton.ws:makeTransaction(returnTo, value, "message=" .. message)
+    else
+        currency.krypton.ws:makeTransaction(returnTo, value, "error=" .. message)
+    end
+end
+
 -- Anytime the shop state is resumed, animation should be finished instantly. (call animation finish hooks)
 ---@param state ShopState
 local function runShop(state)
@@ -40,19 +87,77 @@ local function runShop(state)
             node = "https://tenebra.lil.gay/"
         end
         currency.krypton = Krypton.new({
-            privateKey = currency.privateKey,
+            privateKey = currency.pkey,
             node = node,
             id = currency.id,
         })
         table.insert(state.currencies, currency)
         local kryptonWs = currency.krypton:connect()
-        kryptonWs:subscribe("transactions")
+        kryptonWs:subscribe("ownTransactions")
+        kryptonWs:getSelf()
         table.insert(kryptonListeners, function() kryptonWs:listen() end)
     end
-    parallel.waitForAny(unpack(kryptonListeners), function()
+    parallel.waitForAny(function()
         while true do
-            local event, transaction = os.pullEvent("transaction")
-            --print("Received transaction on " .. transaction.source)
+            local event, transactionEvent = os.pullEvent("transaction")
+            local transactionCurrency = nil
+            for _, currency in ipairs(state.currencies) do
+                if currency.krypton.id == transactionEvent.source then
+                    transactionCurrency = currency
+                    break
+                end
+            end
+            if transactionCurrency then
+                local transaction = transactionEvent.transaction
+                local sentName = transaction.sent_name
+                local sentMetaname = transaction.sent_metaname
+                local nameSuffix = transactionCurrency.krypton.currency.name_suffix
+                if sentName and transactionCurrency.name:find(".") then
+                    sentName = sentName .. "." .. nameSuffix
+                end
+                if sentName and sentName:lower() == transactionCurrency.name:lower() then
+                    local meta = parseMeta(transaction.metadata)
+                    if sentMetaname then
+                        local purchasedProduct = nil
+                        for _, product in ipairs(state.products) do
+                            if product.address:lower() == sentMetaname:lower() then
+                                purchasedProduct = product
+                                break
+                            end
+                        end
+                        if purchasedProduct then
+                            local productPrice = Pricing.getProductPrice(purchasedProduct, transactionCurrency)
+                            local amountPurchased = math.floor(transaction.value / productPrice)
+                            if amountPurchased > 0 then
+                                if purchasedProduct.quantity and purchasedProduct.quantity > 0 then
+                                    local productSources, available = ScanInventory.findProductItems(state.products, purchasedProduct, amountPurchased)
+                                    local refundAmount = transaction.value - (available * productPrice)
+                                    print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.name .. " (refund " .. refundAmount .. ")")
+                                    if available > 0 then
+                                        for _, productSource in ipairs(productSources) do
+                                            peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
+                                            peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, "up")
+                                        end
+                                        if refundAmount > 0 then
+                                            refund(transactionCurrency, transaction.from, meta, refundAmount, "Here is the funds remaining after your purchase!")
+                                        end
+                                    else
+                                        refund(transactionCurrency, transaction.from, meta, transaction.value, "Sorry, that item is out of stock!")
+                                    end
+                                else
+                                    refund(transactionCurrency, transaction.from, meta, transaction.value, "Sorry, that item is out of stock!")
+                                end
+                            else
+                                refund(transactionCurrency, transaction.from, meta, transaction.value, "You must purchase at least one of this product!", true)
+                            end
+                        else
+                            refund(transactionCurrency, transaction.from, meta, transaction.value, "Must supply a valid product to purchase!", true)
+                        end
+                    else
+                        refund(transactionCurrency, transaction.from, meta, transaction.value, "Must supply a product to purchase!", true)
+                    end
+                end
+            end
         end
     end, function()
         while state.running do
@@ -73,7 +178,7 @@ local function runShop(state)
             end
             sleep(math.min(1, state.config.settings.categoryCycleFrequency))
         end
-    end)
+    end, unpack(kryptonListeners))
 end
 
 return {

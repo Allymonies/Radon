@@ -85,7 +85,7 @@ return {
     peripherals = {
         monitor = nil,
         exchangeChest = nil,
-        outputChest = nil,
+        outputChest = "minecraft:chest_3",
     },
     exchange = {
         enabled = true,

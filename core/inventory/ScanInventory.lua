@@ -123,8 +123,8 @@ local function updateProductInventory(products)
     for i = 1, #items do
         local item = items[i]
         local matchingProducts = findMatchingProducts(products, item)
-        for i = 1, #matchingProducts do
-            local product = matchingProducts[i]
+        for j = 1, #matchingProducts do
+            local product = matchingProducts[j]
             product.newQty = product.newQty + item.count
         end
     end
@@ -139,7 +139,55 @@ local function getItemCache()
     return itemCache
 end
 
+local function findProductItemsFrom(product, quantity, items, cached)
+    local sources = {}
+    local remaining = quantity
+    for i = 1, #items do
+        local item = items[i]
+        local inventory = item.inventory
+        local slot = item.slot
+        if cached or item.name == product.modid then
+            item = peripheral.call(inventory, "getItemMeta", slot)
+            if item then
+                if item.name ~= product.modid or (product.predicates and not partialObjectMatches(product.predicates, item)) then
+                    item = nil
+                else
+                    item.inventory = inventory
+                    item.slot = slot
+                end
+            end
+            if item and item.count > 0 then
+                local amount = math.min(item.count, remaining)
+                table.insert(sources, {
+                    inventory = item.inventory,
+                    slot = item.slot,
+                    amount = amount
+                })
+                remaining = remaining - amount
+            end
+        end
+        if remaining <= 0 then
+            break
+        end
+    end
+    return sources, quantity - remaining
+end
+
+local function findProductItems(products, product, quantity)
+    local sources = nil
+    local amount = 0
+    local items = getItemCache()
+    sources, amount = findProductItemsFrom(product, quantity, items, true)
+    if amount == 0 then
+        updateProductInventory(products)
+        items = getItemCache()
+        sources, amount = findProductItemsFrom(product, quantity, items)
+    end
+    return sources, amount
+end
+
 return {
     updateProductInventory = updateProductInventory,
-    getItemCache = getItemCache
+    getItemCache = getItemCache,
+    findProductItems = findProductItems
 }
