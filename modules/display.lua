@@ -34,7 +34,9 @@ function Display.new(props)
     local TextCanvas = canvases.TextCanvas
 
 
-    self.mon = peripheral.wrap(props.peripherals.monitor)
+    if self.mon then
+        self.mon = peripheral.wrap(props.monitor)
+    end
     if not self.mon then
         self.mon = peripheral.find("monitor")
     end

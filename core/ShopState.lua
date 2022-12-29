@@ -167,33 +167,35 @@ local function runShop(state)
     parallel.waitForAny(function()
         while true do
             local event, transactionEvent = os.pullEvent("transaction")
-            local transactionCurrency = nil
-            for _, currency in ipairs(state.currencies) do
-                if currency.krypton.id == transactionEvent.source then
-                    transactionCurrency = currency
-                    break
+            if event == "transaction" then
+                local transactionCurrency = nil
+                for _, currency in ipairs(state.currencies) do
+                    if currency.krypton.id == transactionEvent.source then
+                        transactionCurrency = currency
+                        break
+                    end
                 end
-            end
-            if transactionCurrency then
-                local transaction = transactionEvent.transaction
-                local sentName = transaction.sent_name
-                local sentMetaname = transaction.sent_metaname
-                local nameSuffix = transactionCurrency.krypton.currency.name_suffix
-                if sentName and transactionCurrency.name:find(".") then
-                    sentName = sentName .. "." .. nameSuffix
-                end
-                if sentName and sentName:lower() == transactionCurrency.name:lower() then
-                    local meta = parseMeta(transaction.metadata)
-                    if sentMetaname then
-                        success, err = pcall(handlePurchase, transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
-                        if success then
-                            -- Success :D
+                if transactionCurrency then
+                    local transaction = transactionEvent.transaction
+                    local sentName = transaction.sent_name
+                    local sentMetaname = transaction.sent_metaname
+                    local nameSuffix = transactionCurrency.krypton.currency.name_suffix
+                    if sentName and transactionCurrency.name:find(".") then
+                        sentName = sentName .. "." .. nameSuffix
+                    end
+                    if sentName and sentName:lower() == transactionCurrency.name:lower() then
+                        local meta = parseMeta(transaction.metadata)
+                        if sentMetaname then
+                            success, err = pcall(handlePurchase, transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
+                            if success then
+                                -- Success :D
+                            else
+                                refund(transactionCurrency, transaction.from, meta, transaction.value, "An error occurred while processing your purchase!", true)
+                                error(err)
+                            end
                         else
-                            refund(transactionCurrency, transaction.from, meta, transaction.value, "An error occurred while processing your purchase!", true)
-                            error(err)
+                            refund(transactionCurrency, transaction.from, meta, transaction.value, "Must supply a product to purchase!", true)
                         end
-                    else
-                        refund(transactionCurrency, transaction.from, meta, transaction.value, "Must supply a product to purchase!", true)
                     end
                 end
             end

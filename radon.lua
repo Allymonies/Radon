@@ -1,3 +1,6 @@
+local oldPullEvent = os.pullEvent
+os.pullEvent = os.pullEventRaw
+
 --- Imports
 local _ = require("util.score")
 
@@ -34,7 +37,7 @@ if config.peripherals.outputChest == "self" and not config.peripherals.self then
     error("Output chest is set to self, but no self peripheral name is set")
 end
 
-local display = Display.new({theme=config.theme})
+local display = Display.new({theme=config.theme, monitor=config.peripherals.monitor})
 
 local function getDisplayedProducts(allProducts, settings)
     local displayedProducts = {}
@@ -340,7 +343,7 @@ local Profiler = require("profile")
 
 
 local deltaTimer = os.startTimer(0)
-ShopRunner.launchShop(shopState, function()
+pcall(function() ShopRunner.launchShop(shopState, function()
     -- Profiler:activate()
     while true do
         tree = Solyd.render(tree, Main {t = t, config = config, shopState = shopState})
@@ -357,7 +360,7 @@ ShopRunner.launchShop(shopState, function()
         local t2 = os.epoch("utc")
         -- print("Render time: " .. (t2-t1) .. "ms")
 
-        local e = { os.pullEventRaw() }
+        local e = { os.pullEvent() }
         local name = e[1]
         if name == "timer" and e[2] == deltaTimer then
             local clock = os.epoch("utc")
@@ -378,17 +381,20 @@ ShopRunner.launchShop(shopState, function()
                 break
             end
         elseif name == "terminate" then
-            display.mon.clear()
             break
         end
     end
     -- Profiler:deactivate()
-end)
+end) end)
 
-for i = 1, #config.currencies do
-    local currency = config.currencies[i]
-    currency.krypton.ws.disconnect()
+display.mon.clear()
+for i = 1, #shopState.config.currencies do
+    local currency = shopState.config.currencies[i]
+    if (currency.krypton and currency.krypton.ws) then
+        currency.krypton.ws:disconnect()
+    end
 end
 
+os.pullEvent = oldPullEvent
 print("Radon terminated, goodbye!")
 -- Profiler:write_results(nil, "profile.txt")

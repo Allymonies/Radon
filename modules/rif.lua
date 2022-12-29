@@ -69,11 +69,8 @@ for i = 1, 16 do
     --colors[revPalMap[i]] = 2^(i - 1)
 end
 
-return function(filename)
+return function(data)
     -- Riko 4 image format
-
-    local file = fs.open(filename, "rb")
-    local data = file.readAll()
 
     local width, height = data:byte(5) * 256 + data:byte(6), data:byte(7) * 256 + data:byte(8)
     local canv = PixelCanvas(width, height)
