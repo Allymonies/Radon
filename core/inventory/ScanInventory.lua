@@ -96,7 +96,7 @@ function partialObjectMatches(partialObject, object)
 end
 
 local function predicateMatches(predicates, item)
-    local meta = peripheral.call(item.inventory, "getItemMeta", item.slot)
+    local meta = peripheral.call(item.inventory, "getItemDetail", item.slot)
     return partialObjectMatches(predicates, meta)
 end
 
@@ -147,7 +147,7 @@ local function findProductItemsFrom(product, quantity, items, cached)
         local inventory = item.inventory
         local slot = item.slot
         if cached or item.name == product.modid then
-            item = peripheral.call(inventory, "getItemMeta", slot)
+            item = peripheral.call(inventory, "getItemDetail", slot)
             if item then
                 if item.name ~= product.modid or (product.predicates and not partialObjectMatches(product.predicates, item)) then
                     item = nil

@@ -30,6 +30,10 @@ local products = require("products")
 ConfigValidator.validateConfig(config)
 ConfigValidator.validateProducts(products)
 
+if config.peripherals.outputChest == "self" and not config.peripherals.self then
+    error("Output chest is set to self, but no self peripheral name is set")
+end
+
 local display = Display.new({theme=config.theme})
 
 local function getDisplayedProducts(allProducts, settings)
@@ -105,7 +109,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
     }
 
     if props.shopState.selectedCurrency then
-        local footer = SmolText { display=display, text="/pay <product>@" .. props.shopState.selectedCurrency.name .. " <amt>", x=1, y=display.bgCanvas.height-smolFont.height-4, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
+        local footer = SmolText { display=display, text="/pay <item>@" .. props.shopState.selectedCurrency.name .. " <amt>", x=1, y=display.bgCanvas.height-smolFont.height-4, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
         table.insert(flatCanvas, footer)
     end
 
@@ -353,7 +357,7 @@ ShopRunner.launchShop(shopState, function()
         local t2 = os.epoch("utc")
         -- print("Render time: " .. (t2-t1) .. "ms")
 
-        local e = { os.pullEvent() }
+        local e = { os.pullEventRaw() }
         local name = e[1]
         if name == "timer" and e[2] == deltaTimer then
             local clock = os.epoch("utc")
@@ -373,9 +377,18 @@ ShopRunner.launchShop(shopState, function()
             if e[2] == keys.q then
                 break
             end
+        elseif name == "terminate" then
+            display.mon.clear()
+            break
         end
     end
     -- Profiler:deactivate()
 end)
 
+for i = 1, #config.currencies do
+    local currency = config.currencies[i]
+    currency.krypton.ws.disconnect()
+end
+
+print("Radon terminated, goodbye!")
 -- Profiler:write_results(nil, "profile.txt")
