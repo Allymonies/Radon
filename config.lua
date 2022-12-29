@@ -9,6 +9,15 @@ return {
         activityTimeout = 60,
         dropDirection = "forward"
     },
+    lang = {
+        footer = "/pay <item>@%name% <amt>",
+        refundRemaining = "Here is the funds remaining after your purchase!",
+        refundOutofStock = "Sorry, that item is out of stock!",
+        refundAtLeastOne = "You must purchase at least one of this product!",
+        refundInvalidProduct = "You must supply a valid product to purchase!",
+        refundNoProduct = "You must supply a product to purchase!",
+        refundError = "An error occurred while processing your purchase!"
+    },
     theme = {
         formatting = {
             headerAlign = "center",

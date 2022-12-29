@@ -123,19 +123,19 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                     end
                     purchasedProduct.quantity = purchasedProduct.quantity - available
                     if refundAmount > 0 then
-                        refund(transactionCurrency, transaction.from, meta, refundAmount, "Here is the funds remaining after your purchase!")
+                        refund(transactionCurrency, transaction.from, meta, refundAmount, state.config.lang.refundRemaining)
                     end
                 else
-                    refund(transactionCurrency, transaction.from, meta, transaction.value, "Sorry, that item is out of stock!")
+                    refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
                 end
             else
-                refund(transactionCurrency, transaction.from, meta, transaction.value, "Sorry, that item is out of stock!")
+                refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
             end
         else
-            refund(transactionCurrency, transaction.from, meta, transaction.value, "You must purchase at least one of this product!", true)
+            refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundAtLeastOne, true)
         end
     else
-        refund(transactionCurrency, transaction.from, meta, transaction.value, "Must supply a valid product to purchase!", true)
+        refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundInvalidProduct, true)
     end
 end
 
@@ -190,11 +190,11 @@ local function runShop(state)
                             if success then
                                 -- Success :D
                             else
-                                refund(transactionCurrency, transaction.from, meta, transaction.value, "An error occurred while processing your purchase!", true)
+                                refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundError, true)
                                 error(err)
                             end
                         else
-                            refund(transactionCurrency, transaction.from, meta, transaction.value, "Must supply a product to purchase!", true)
+                            refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundNoProduct, true)
                         end
                     end
                 end

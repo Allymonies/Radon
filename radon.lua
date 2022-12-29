@@ -111,8 +111,13 @@ local Main = Solyd.wrapComponent("Main", function(props)
         header
     }
 
+    local footerMessage = props.config.lang.footer
+    if footerMessage:find("%%name%%") then
+        footerMessage = footerMessage:gsub("%%name%%", props.shopState.selectedCurrency.name)
+    end
+
     if props.shopState.selectedCurrency then
-        local footer = SmolText { display=display, text="/pay <item>@" .. props.shopState.selectedCurrency.name .. " <amt>", x=1, y=display.bgCanvas.height-smolFont.height-4, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
+        local footer = SmolText { display=display, text=footerMessage, x=1, y=display.bgCanvas.height-smolFont.height-4, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
         table.insert(flatCanvas, footer)
     end
 

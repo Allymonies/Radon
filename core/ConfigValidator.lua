@@ -11,6 +11,15 @@ local configSchema = {
         activityTimeout = "number",
         dropDirection = "enum<'forward' | 'up' | 'down' | 'north' | 'south' | 'east' | 'west'>: direction"
     },
+    lang = {
+        footer = "string",
+        refundRemaining = "string",
+        refundOutofStock = "string",
+        refundAtLeastOne = "string",
+        refundInvalidProduct = "string",
+        refundNoProduct = "string",
+        refundError = "string"
+    },
     theme = {
         formatting = {
             headerAlign = "enum<'left' | 'center' | 'right'>: alignment",
