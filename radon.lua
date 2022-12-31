@@ -152,18 +152,26 @@ local Main = Solyd.wrapComponent("Main", function(props)
     local currencySymbol = getCurrencySymbol(currency, productTextSize)
     for i = 1, #shopProducts do
         local product = shopProducts[i]
+        local productAddr = product.address .. "@"
+        if productTextSize == "small" then
+            if props.config.settings.smallTextKristPayCompatability then
+                productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
+            else
+                productAddr = product.address .. "@ "
+            end
+        end
         product.quantity = product.quantity or 0
         local productPrice = Pricing.getProductPrice(product, props.shopState.selectedCurrency)
         if productTextSize == "large" then
-            maxAddrWidth = math.max(maxAddrWidth, bigFont:getWidth(product.address .. "@")+2)
+            maxAddrWidth = math.max(maxAddrWidth, bigFont:getWidth(productAddr)+2)
             maxQtyWidth = math.max(maxQtyWidth, bigFont:getWidth(tostring(product.quantity))+4)
             maxPriceWidth = math.max(maxPriceWidth, bigFont:getWidth(tostring(productPrice) .. currencySymbol)+2)
         elseif productTextSize == "medium" then
-            maxAddrWidth = math.max(maxAddrWidth, smolFont:getWidth(product.address .. "@")+2)
+            maxAddrWidth = math.max(maxAddrWidth, smolFont:getWidth(productAddr)+2)
             maxQtyWidth = math.max(maxQtyWidth, smolFont:getWidth(tostring(product.quantity))+4)
             maxPriceWidth = math.max(maxPriceWidth, smolFont:getWidth(tostring(productPrice) .. currencySymbol)+2)
         else
-            maxAddrWidth = math.max(maxAddrWidth, #(product.address .. "@")+1)
+            maxAddrWidth = math.max(maxAddrWidth, #(productAddr)+1)
             maxQtyWidth = math.max(maxQtyWidth, #tostring(product.quantity)+2)
             maxPriceWidth = math.max(maxPriceWidth, #(tostring(productPrice) .. currencySymbol)+1)
         end
@@ -186,21 +194,171 @@ local Main = Solyd.wrapComponent("Main", function(props)
         if product.quantity == 0 then
             productNameColor = theme.colors.outOfStockNameColor
         end
+        local productAddr = product.address .. "@"
+        if productTextSize == "small" then
+            if props.config.settings.smallTextKristPayCompatability then
+                productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
+            else
+                productAddr = product.address .. "@ "
+            end
+        end
         if productTextSize == "large" then
-            table.insert(flatCanvas, BigText { key="qty-"..catName..tostring(product.id), display=display, text=tostring(product.quantity), x=1, y=17+((i-1)*15), align="center", bg=theme.colors.productBgColor, color=qtyColor, width=maxQtyWidth })
-            table.insert(flatCanvas, BigText { key="name-"..catName..tostring(product.id), display=display, text=product.name, x=maxQtyWidth+1, y=17+((i-1)*15), align=theme.formatting.productNameAlign, bg=theme.colors.productBgColor, color=productNameColor, width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth })
-            table.insert(flatCanvas, BigText { key="price-"..catName..tostring(product.id), display=display, text=tostring(productPrice) .. currencySymbol, x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth, y=17+((i-1)*15), align="right", bg=theme.colors.productBgColor, color=theme.colors.priceColor, width=maxPriceWidth })
-            table.insert(flatCanvas, BigText { key="addr-"..catName..tostring(product.id), display=display, text=product.address .. "@", x=display.bgCanvas.width-3-maxAddrWidth, y=17+((i-1)*15), align="right", bg=theme.colors.productBgColor, color=theme.colors.addressColor, width=maxAddrWidth+4 })
+            table.insert(flatCanvas, BigText {
+                key="qty-"..catName..tostring(product.id),
+                display=display,
+                text=tostring(product.quantity),
+                x=1,
+                y=17+((i-1)*15),
+                align="center",
+                bg=theme.colors.productBgColor,
+                color=qtyColor,
+                width=maxQtyWidth
+            })
+            table.insert(flatCanvas, BigText {
+                key="name-"..catName..tostring(product.id),
+                display=display,
+                text=product.name,
+                x=maxQtyWidth+1,
+                y=17+((i-1)*15),
+                align=theme.formatting.productNameAlign,
+                bg=theme.colors.productBgColor,
+                color=productNameColor,
+                width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth
+            })
+            table.insert(flatCanvas, BigText {
+                key="price-"..catName..tostring(product.id),
+                display=display,
+                text=tostring(productPrice) .. currencySymbol,
+                x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth,
+                y=17+((i-1)*15),
+                align="right",
+                bg=theme.colors.productBgColor,
+                color=theme.colors.priceColor,
+                width=maxPriceWidth
+            })
+            table.insert(flatCanvas, BigText {
+                key="addr-"..catName..tostring(product.id),
+                display=display,
+                text=productAddr,
+                x=display.bgCanvas.width-3-maxAddrWidth,
+                y=17+((i-1)*15),
+                align="right",
+                bg=theme.colors.productBgColor,
+                color=theme.colors.addressColor,
+                width=maxAddrWidth+4
+            })
+            table.insert(flatCanvas, BasicText {
+                key="invis-" .. catName .. tostring(product.id),
+                display=display,
+                text=product.address .. "@" .. props.shopState.selectedCurrency.name,
+                x=1,
+                y=1+(i*5),
+                align="center",
+                bg=theme.colors.productBgColor,
+                color=theme.colors.productBgColor,
+                width=#(product.address .. "@" .. props.shopState.selectedCurrency.name)
+            })
         elseif productTextSize == "medium" then
-            table.insert(flatCanvas, SmolText { key="qty-"..catName..tostring(product.id), display=display, text=tostring(product.quantity), x=1, y=17+((i-1)*9), align="center", bg=theme.colors.productBgColor, color=qtyColor, width=maxQtyWidth })
-            table.insert(flatCanvas, SmolText { key="name-"..catName..tostring(product.id), display=display, text=product.name, x=maxQtyWidth+1, y=17+((i-1)*9), align=theme.formatting.productNameAlign, bg=theme.colors.productBgColor, color=productNameColor, width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth })
-            table.insert(flatCanvas, SmolText { key="price-"..catName..tostring(product.id), display=display, text=tostring(productPrice) .. currencySymbol, x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth, y=17+((i-1)*9), align="right", bg=theme.colors.productBgColor, color=theme.colors.priceColor, width=maxPriceWidth })
-            table.insert(flatCanvas, SmolText { key="addr-"..catName..tostring(product.id), display=display, text=product.address .. "@", x=display.bgCanvas.width-3-maxAddrWidth, y=17+((i-1)*9), align="right", bg=theme.colors.productBgColor, color=theme.colors.addressColor, width=maxAddrWidth+4 })
+            table.insert(flatCanvas, SmolText {
+                key="qty-"..catName..tostring(product.id),
+                display=display,
+                text=tostring(product.quantity),
+                x=1,
+                y=17+((i-1)*9),
+                align="center",
+                bg=theme.colors.productBgColor,
+                color=qtyColor,
+                width=maxQtyWidth
+            })
+            table.insert(flatCanvas, SmolText {
+                key="name-"..catName..tostring(product.id),
+                display=display,
+                text=product.name,
+                x=maxQtyWidth+1,
+                y=17+((i-1)*9),
+                align=theme.formatting.productNameAlign,
+                bg=theme.colors.productBgColor,
+                color=productNameColor,
+                width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth
+            })
+            table.insert(flatCanvas, SmolText {
+                key="price-"..catName..tostring(product.id),
+                display=display,
+                text=tostring(productPrice) .. currencySymbol,
+                x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth,
+                y=17+((i-1)*9),
+                align="right",
+                bg=theme.colors.productBgColor,
+                color=theme.colors.priceColor,
+                width=maxPriceWidth
+            })
+            table.insert(flatCanvas, SmolText { 
+                ey="addr-"..catName..tostring(product.id),
+                display=display,
+                text=productAddr,
+                x=display.bgCanvas.width-3-maxAddrWidth,
+                y=17+((i-1)*9),
+                align="right",
+                bg=theme.colors.productBgColor,
+                color=theme.colors.addressColor,
+                width=maxAddrWidth+4
+            })
+            table.insert(flatCanvas, BasicText {
+                key="invis-" .. catName .. tostring(product.id),
+                display=display,
+                text=product.address .. "@" .. props.shopState.selectedCurrency.name,
+                x=1,
+                y=3+(i*3),
+                align="center",
+                bg=theme.colors.productBgColor,
+                color=theme.colors.productBgColor,
+                width=#(product.address .. "@" .. props.shopState.selectedCurrency.name)
+            })
         else
-            table.insert(flatCanvas, BasicText { key="qty-"..catName..tostring(product.id), display=display, text=tostring(product.quantity), x=1, y=6+((i-1)*1), align="center", bg=theme.colors.productBgColor, color=qtyColor, width=maxQtyWidth })
-            table.insert(flatCanvas, BasicText { key="name-"..catName..tostring(product.id), display=display, text=product.name, x=maxQtyWidth+1, y=6+((i-1)*1), align=theme.formatting.productNameAlign, bg=theme.colors.productBgColor, color=productNameColor, width=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth-maxQtyWidth })
-            table.insert(flatCanvas, BasicText { key="price-"..catName..tostring(product.id), display=display, text=tostring(productPrice) .. currencySymbol, x=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth, y=6+((i-1)*1), align="right", bg=theme.colors.productBgColor, color=theme.colors.priceColor, width=maxPriceWidth })
-            table.insert(flatCanvas, BasicText { key="addr-"..catName..tostring(product.id), display=display, text=product.address .. "@  ", x=(display.bgCanvas.width/2)-1-maxAddrWidth, y=6+((i-1)*1), align="right", bg=theme.colors.productBgColor, color=theme.colors.addressColor, width=maxAddrWidth+2 })
+            table.insert(flatCanvas, BasicText {
+                key="qty-"..catName..tostring(product.id),
+                display=display,
+                text=tostring(product.quantity),
+                x=1,
+                y=6+((i-1)*1),
+                align="center",
+                bg=theme.colors.productBgColor,
+                color=qtyColor,
+                width=maxQtyWidth
+            })
+            table.insert(flatCanvas, BasicText {
+                key="name-"..catName..tostring(product.id),
+                display=display,
+                text=product.name,
+                x=maxQtyWidth+1,
+                y=6+((i-1)*1),
+                align=theme.formatting.productNameAlign,
+                bg=theme.colors.productBgColor,
+                color=productNameColor,
+                width=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth-maxQtyWidth
+            })
+            table.insert(flatCanvas, BasicText {
+                key="price-"..catName..tostring(product.id),
+                display=display,
+                text=tostring(productPrice) .. currencySymbol,
+                x=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth,
+                y=6+((i-1)*1),
+                align="right",
+                bg=theme.colors.productBgColor,
+                color=theme.colors.priceColor,
+                width=maxPriceWidth
+            })
+            table.insert(flatCanvas, BasicText {
+                key="addr-"..catName..tostring(product.id),
+                display=display,
+                text=productAddr,
+                x=(display.bgCanvas.width/2)-1-maxAddrWidth,
+                y=6+((i-1)*1),
+                align="right",
+                bg=theme.colors.productBgColor,
+                color=theme.colors.addressColor,
+                width=maxAddrWidth+2
+            })
         end
     end
 

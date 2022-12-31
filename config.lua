@@ -7,7 +7,8 @@ return {
         pollFrequency = 30,
         categoryCycleFrequency = -1,
         activityTimeout = 60,
-        dropDirection = "forward"
+        dropDirection = "forward",
+        smallTextKristPayCompatability = true,
     },
     lang = {
         footer = "/pay <item>@%name% <amt>",

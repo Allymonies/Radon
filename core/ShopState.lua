@@ -79,7 +79,7 @@ end
 local function handlePurchase(transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
     local purchasedProduct = nil
     for _, product in ipairs(state.products) do
-        if product.address:lower() == sentMetaname:lower() then
+        if product.address:lower() == sentMetaname:lower() or product.name:gsub(" ", ""):lower() == sentMetaname:lower() then
             purchasedProduct = product
             break
         end

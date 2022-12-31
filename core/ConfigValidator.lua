@@ -9,7 +9,8 @@ local configSchema = {
         pollFrequency = "number",
         categoryCycleFrequency = "number",
         activityTimeout = "number",
-        dropDirection = "enum<'forward' | 'up' | 'down' | 'north' | 'south' | 'east' | 'west'>: direction"
+        dropDirection = "enum<'forward' | 'up' | 'down' | 'north' | 'south' | 'east' | 'west'>: direction",
+        smallTextKristPayCompatability = "boolean",
     },
     lang = {
         footer = "string",
