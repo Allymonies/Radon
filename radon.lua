@@ -105,7 +105,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
     local canvas = useCanvas(display)
     local theme = props.config.theme
 
-    local header = BigText { display=display, text="Radon Shop", x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
+    local header = BigText { display=display, text=props.config.branding.title, x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
 
     local flatCanvas = {
         header
@@ -506,7 +506,7 @@ local Profiler = require("profile")
 
 
 local deltaTimer = os.startTimer(0)
-pcall(function() ShopRunner.launchShop(shopState, function()
+local success, err = pcall(function() ShopRunner.launchShop(shopState, function()
     -- Profiler:activate()
     while true do
         tree = Solyd.render(tree, Main {t = t, config = config, shopState = shopState})
@@ -559,5 +559,8 @@ for i = 1, #shopState.config.currencies do
 end
 
 os.pullEvent = oldPullEvent
+if not success then
+    error(err)
+end
 print("Radon terminated, goodbye!")
 -- Profiler:write_results(nil, "profile.txt")

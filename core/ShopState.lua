@@ -186,7 +186,7 @@ local function runShop(state)
                     if sentName and sentName:lower() == transactionCurrency.name:lower() then
                         local meta = parseMeta(transaction.metadata)
                         if sentMetaname then
-                            success, err = pcall(handlePurchase, transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
+                            local success, err = pcall(handlePurchase, transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
                             if success then
                                 -- Success :D
                             else
