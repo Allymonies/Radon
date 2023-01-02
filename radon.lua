@@ -1,6 +1,8 @@
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
+local version = "1.1.0"
+
 --- Imports
 local _ = require("util.score")
 
@@ -495,6 +497,7 @@ local Profiler = require("profile")
 local deltaTimer = os.startTimer(0)
 local success, err = pcall(function() ShopRunner.launchShop(shopState, function()
     -- Profiler:activate()
+    print("Radon " .. version .. " has started")
     while true do
         tree = Solyd.render(tree, Main {t = t, config = config, shopState = shopState})
 
