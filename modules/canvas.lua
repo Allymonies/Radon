@@ -472,8 +472,9 @@ function TeletextCanvas:composite(...)
         local originPartitionX = (ceil(otherX/partitionSize) - 1)*partitionSize + 1
         local originPartitionY = (ceil(otherY/partitionSize) - 1)*partitionSize + 1
 
-        for y = originPartitionY, otherY+otherCanvas.height-1, partitionSize do
-            for x = originPartitionX, otherX+otherCanvas.width-1, partitionSize do
+        --TODO: This is a hack, should use -1 instead of +1
+        for y = originPartitionY, otherY+otherCanvas.height+1, partitionSize do
+            for x = originPartitionX, otherX+otherCanvas.width+1, partitionSize do
                 local px = ceil(x/partitionSize)
                 local py = ceil(y/partitionSize)
                 local partition = (partitions[py] or {})[px]

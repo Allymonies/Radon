@@ -26,7 +26,7 @@ return Solyd.wrapComponent("SmolText", function(props)
                 cx = props.width - smolFont:getWidth(props.text) - 2
             end
         end
-        smolFont:write(canvas, props.text, 2 + cx, bgHeight, props.color or colors.white)
+        smolFont:write(canvas, props.text, 2 + cx, bgHeight+1, props.color or colors.white)
 
         return function()
             canvas:markRect(1, 1, fw, smolFont.height+bgHeight)

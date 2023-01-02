@@ -1,7 +1,7 @@
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
-local version = "1.1.1"
+local version = "1.1.2"
 
 --- Imports
 local _ = require("util.score")
@@ -108,15 +108,62 @@ local function getCategories(products)
     return categories
 end
 
+local function getWidth(text, fontSize)
+    if fontSize == "large" then
+        return bigFont:getWidth(text)
+    elseif fontSize == "medium" then
+        return smolFont:getWidth(text)
+    else
+        return #text
+    end
+end
+
+
 local Main = Solyd.wrapComponent("Main", function(props)
     local canvas = useCanvas(display)
     local theme = props.config.theme
+    
+    local flatCanvas = {}
 
-    local header = BigText { display=display, text=props.config.branding.title, x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
+    local categories = getCategories(props.shopState.products)
+    local selectedCategory = props.shopState.selectedCategory
 
-    local flatCanvas = {
-        header
-    }
+    local currencyEndX = 3
+    if #props.config.currencies > 1 then
+        for i = 1, #props.config.currencies do
+            local symbol = getCurrencySymbol(props.config.currencies[i], "large")
+            local symbolSize = bigFont:getWidth(symbol)+6
+            currencyEndX = currencyEndX + symbolSize + 2
+        end
+    end
+
+    local categoryX = display.bgCanvas.width - 2
+    if #categories > 1 then
+        for i = #categories, 1, -1 do
+            local category = categories[i]
+            local categoryName = category.name
+            if i == selectedCategory then
+                categoryName = "[" .. categoryName .. "]"
+            end
+            local categoryWidth = smolFont:getWidth(categoryName)+6
+            categoryX = categoryX - categoryWidth - 2
+        end
+    end
+
+    local headerCx = math.floor((display.bgCanvas.width - bigFont:getWidth(props.config.branding.title)) / 2)
+    local header
+    -- TODO: Change header font size based on width
+    if theme.formatting.headerAlign == "center" and headerCx < currencyEndX and #categories == 1 then
+        table.insert(flatCanvas, Rect { display=display, x=1, y=1, width=currencyEndX, height=bigFont.height+6, color=theme.colors.headerBgColor })
+        header = BigText { display=display, text=props.config.branding.title, x=currencyEndX, y=1, align="left", bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
+    elseif theme.formatting.headerAlign == "center" and headerCx+bigFont:getWidth(props.config.branding.title) > categoryX and #categories > 1 then
+        table.insert(flatCanvas, Rect { display=display, x=categoryX, y=1, width=display.bgCanvas.width-categoryX+1, height=bigFont.height+6, color=theme.colors.headerBgColor })
+        header = BigText { display=display, text=props.config.branding.title, x=1, y=1, align="right", bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=categoryX-1 }
+    else
+        header = BigText { display=display, text=props.config.branding.title, x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
+    end
+
+    table.insert(flatCanvas, header)
 
     local footerMessage = props.config.lang.footer
     if footerMessage:find("%%name%%") then
@@ -124,16 +171,21 @@ local Main = Solyd.wrapComponent("Main", function(props)
     end
 
     if props.shopState.selectedCurrency then
-        local footer = SmolText { display=display, text=footerMessage, x=1, y=display.bgCanvas.height-smolFont.height-4, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
+        local footer
+        if smolFont:getWidth(footerMessage) < display.bgCanvas.width then
+            footer = SmolText { display=display, text=footerMessage, x=1, y=display.bgCanvas.height-smolFont.height-4, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
+        else
+            footer = BasicText { display=display, text=footerMessage, x=1, y=math.floor(display.bgCanvas.height/3), align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=math.ceil(display.bgCanvas.width/2) }
+        end
+        
         table.insert(flatCanvas, footer)
     end
 
     local maxAddrWidth = 0
     local maxQtyWidth = 0
     local maxPriceWidth = 0
-    local categories = getCategories(props.shopState.products)
+    local maxNameWidth = 0
     props.shopState.numCategories = #categories
-    local selectedCategory = props.shopState.selectedCategory
     local catName = categories[selectedCategory].name
     local shopProducts = getDisplayedProducts(categories[selectedCategory].products, config.settings)
     local productsHeight = display.bgCanvas.height - 17 - smolFont.height - 4
@@ -153,30 +205,54 @@ local Main = Solyd.wrapComponent("Main", function(props)
 
     local currency = props.shopState.selectedCurrency
     local currencySymbol = getCurrencySymbol(currency, productTextSize)
-    for i = 1, #shopProducts do
-        local product = shopProducts[i]
-        local productAddr = product.address .. "@"
-        if productTextSize == "small" then
-            if props.config.settings.smallTextKristPayCompatability then
-                productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
-            else
-                productAddr = product.address .. "@ "
+    while maxAddrWidth == 0 or maxAddrWidth + maxQtyWidth + maxPriceWidth + maxNameWidth > display.bgCanvas.width - 3 do
+        if props.config.theme.formatting.productTextSize == "auto" and (maxAddrWidth + maxQtyWidth + maxPriceWidth + maxNameWidth > display.bgCanvas.width - 3) then
+            if productTextSize == "large" then
+                productTextSize = "medium"
+                maxAddrWidth = 0
+                maxQtyWidth = 0
+                maxPriceWidth = 0
+                maxNameWidth = 0
+            elseif productTextSize == "medium" then
+                productTextSize = "small"
+                maxAddrWidth = 0
+                maxQtyWidth = 0
+                maxPriceWidth = 0
+                maxNameWidth = 0
             end
         end
-        product.quantity = product.quantity or 0
-        local productPrice = Pricing.getProductPrice(product, props.shopState.selectedCurrency)
-        if productTextSize == "large" then
-            maxAddrWidth = math.max(maxAddrWidth, bigFont:getWidth(productAddr)+2)
-            maxQtyWidth = math.max(maxQtyWidth, bigFont:getWidth(tostring(product.quantity))+4)
-            maxPriceWidth = math.max(maxPriceWidth, bigFont:getWidth(tostring(productPrice) .. currencySymbol)+2)
-        elseif productTextSize == "medium" then
-            maxAddrWidth = math.max(maxAddrWidth, smolFont:getWidth(productAddr)+2)
-            maxQtyWidth = math.max(maxQtyWidth, smolFont:getWidth(tostring(product.quantity))+4)
-            maxPriceWidth = math.max(maxPriceWidth, smolFont:getWidth(tostring(productPrice) .. currencySymbol)+2)
-        else
-            maxAddrWidth = math.max(maxAddrWidth, #(productAddr)+1)
-            maxQtyWidth = math.max(maxQtyWidth, #tostring(product.quantity)+2)
-            maxPriceWidth = math.max(maxPriceWidth, #(tostring(productPrice) .. currencySymbol)+1)
+        currencySymbol = getCurrencySymbol(currency, productTextSize)
+        for i = 1, #shopProducts do
+            local product = shopProducts[i]
+            local productAddr = product.address .. "@"
+            if productTextSize == "small" then
+                if props.config.settings.smallTextKristPayCompatability then
+                    productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
+                else
+                    productAddr = product.address .. "@ "
+                end
+            end
+            product.quantity = product.quantity or 0
+            local productPrice = Pricing.getProductPrice(product, props.shopState.selectedCurrency)
+            if productTextSize == "large" then
+                maxAddrWidth = math.max(maxAddrWidth, getWidth(productAddr, productTextSize)+2)
+                maxQtyWidth = math.max(maxQtyWidth, getWidth(tostring(product.quantity), productTextSize)+4)
+                maxPriceWidth = math.max(maxPriceWidth, getWidth(tostring(productPrice) .. currencySymbol, productTextSize)+2)
+                maxNameWidth = math.max(maxNameWidth, getWidth(product.name, productTextSize)+2)
+            elseif productTextSize == "medium" then
+                maxAddrWidth = math.max(maxAddrWidth, getWidth(productAddr, productTextSize)+2)
+                maxQtyWidth = math.max(maxQtyWidth, getWidth(tostring(product.quantity), productTextSize)+4)
+                maxPriceWidth = math.max(maxPriceWidth, getWidth(tostring(productPrice) .. currencySymbol, productTextSize)+2)
+                maxNameWidth = math.max(maxNameWidth, getWidth(product.name, productTextSize)+2)
+            else
+                maxAddrWidth = math.max(maxAddrWidth, getWidth(productAddr, productTextSize)+1)
+                maxQtyWidth = math.max(maxQtyWidth, getWidth(tostring(product.quantity), productTextSize)+2)
+                maxPriceWidth = math.max(maxPriceWidth, getWidth(tostring(productPrice) .. currencySymbol, productTextSize)+1)
+                maxNameWidth = math.max(maxNameWidth, getWidth(product.name, productTextSize)+1)
+            end
+        end
+        if props.config.theme.formatting.productTextSize ~= "auto" or productTextSize == "small" then
+            break
         end
     end
     for i = 1, #shopProducts do
@@ -369,7 +445,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
     local currencyX = 3
     if #props.config.currencies > 1 then
         for i = 1, #props.config.currencies do
-            local symbol = getCurrencySymbol(props.config.currencies[i], productTextSize)
+            local symbol = getCurrencySymbol(props.config.currencies[i], "large")
             local symbolSize = bigFont:getWidth(symbol)+6
             local bgColor = theme.colors.currencyBgColors[((i-1) % #theme.colors.currencyBgColors) + 1]
             table.insert(flatCanvas, Button {
