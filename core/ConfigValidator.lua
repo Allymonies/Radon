@@ -14,6 +14,7 @@ local configSchema = {
     },
     lang = {
         footer = "string",
+        footerNoName = "string?",
         refundRemaining = "string",
         refundOutOfStock = "string",
         refundAtLeastOne = "string",
@@ -87,7 +88,7 @@ local configSchema = {
             id = "string",
             node = "string?",
             host = [[regex<^\w{10}$>: address]],
-            name = "string",
+            name = "string?",
             pkey = "string",
             pkeyFormat = "enum<'raw' | 'kristwallet'>: pkey format",
             value = "number?"

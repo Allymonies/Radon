@@ -29,12 +29,15 @@ end
 
 local function parseMeta(transactionMeta)
     local meta = {}
+    local i = 1
     for metaEntry in transactionMeta:gmatch("([^;]+)") do
         if metaEntry:find("=") then
             local key, value = metaEntry:match("([^=]+)=([^=]+)")
             meta[key] = value
         else
             meta[metaEntry] = true
+            meta[i] = metaEntry
+            i = i + 1
         end
     end
     return meta
@@ -92,7 +95,7 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
             if purchasedProduct.quantity and purchasedProduct.quantity > 0 then
                 local productSources, available = ScanInventory.findProductItems(state.products, purchasedProduct, amountPurchased)
                 local refundAmount = math.floor(transaction.value - (available * productPrice))
-                print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.name .. " (refund " .. refundAmount .. ")")
+                print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.id .. " (refund " .. refundAmount .. ")")
                 if available > 0 then
                     for _, productSource in ipairs(productSources) do
                         if state.config.peripherals.outputChest == "self" then
@@ -173,11 +176,14 @@ local function runShop(state)
                     local sentName = transaction.sent_name
                     local sentMetaname = transaction.sent_metaname
                     local nameSuffix = transactionCurrency.krypton.currency.name_suffix
-                    if sentName and transactionCurrency.name:find(".") then
+                    if sentName and transactionCurrency.name and transactionCurrency.name:find(".") then
                         sentName = sentName .. "." .. nameSuffix
                     end
-                    if sentName and sentName:lower() == transactionCurrency.name:lower() then
+                    if not transactionCurrency.name or sentName and sentName:lower() == transactionCurrency.name:lower() then
                         local meta = parseMeta(transaction.metadata)
+                        if transaction.to == transactionCurrency.host and not transactionCurrency.name and not sentMetaname then
+                            sentMetaname = meta[1]
+                        end
                         if sentMetaname then
                             local success, err = pcall(handlePurchase, transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
                             if success then

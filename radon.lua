@@ -1,7 +1,7 @@
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
-local version = "1.1.2"
+local version = "1.1.3"
 
 --- Imports
 local _ = require("util.score")
@@ -59,10 +59,9 @@ local function getDisplayedProducts(allProducts, settings)
 end
 
 local function getCurrencySymbol(currency, productTextSize)
-    local currencySymbol
     if currency.krypton and currency.krypton.currency then
         currencySymbol = currency.krypton.currency.currency_symbol  
-    elseif not currencySymbol and currency.name:find("%.") then
+    elseif not currencySymbol and currency.name and currency.name:find("%.") then
         currencySymbol = currency.name:sub(currency.name:find("%.")+1, #currency.name)
     elseif currency.id == "tenebra" then
         currencySymbol = "tst"
@@ -165,9 +164,20 @@ local Main = Solyd.wrapComponent("Main", function(props)
 
     table.insert(flatCanvas, header)
 
-    local footerMessage = props.config.lang.footer
-    if footerMessage:find("%%name%%") then
+    local footerMessage
+    if props.shopState.selectedCurrency.name or not props.config.lang.footerNoName then
+        footerMessage = props.config.lang.footer
+    else
+        footerMessage = props.config.lang.footerNoName
+    end
+    if props.shopState.selectedCurrency.name and footerMessage:find("%%name%%") then
         footerMessage = footerMessage:gsub("%%name%%", props.shopState.selectedCurrency.name)
+    end
+    if footerMessage:find("%%addr%%") then
+        footerMessage = footerMessage:gsub("%%addr%%", props.shopState.selectedCurrency.host)
+    end
+    if footerMessage:find("%%version%%") then
+        footerMessage = footerMessage:gsub("%%version%%", version)
     end
 
     if props.shopState.selectedCurrency then
@@ -225,12 +235,16 @@ local Main = Solyd.wrapComponent("Main", function(props)
         for i = 1, #shopProducts do
             local product = shopProducts[i]
             local productAddr = product.address .. "@"
-            if productTextSize == "small" then
-                if props.config.settings.smallTextKristPayCompatability then
-                    productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
-                else
-                    productAddr = product.address .. "@ "
+            if props.shopState.selectedCurrency.name then
+                if productTextSize == "small" then
+                    if props.config.settings.smallTextKristPayCompatability then
+                        productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
+                    else
+                        productAddr = product.address .. "@ "
+                    end
                 end
+            else
+                productAddr = product.address
             end
             product.quantity = product.quantity or 0
             local productPrice = Pricing.getProductPrice(product, props.shopState.selectedCurrency)
@@ -274,12 +288,20 @@ local Main = Solyd.wrapComponent("Main", function(props)
             productNameColor = theme.colors.outOfStockNameColor
         end
         local productAddr = product.address .. "@"
-        if productTextSize == "small" then
-            if props.config.settings.smallTextKristPayCompatability then
-                productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
-            else
-                productAddr = product.address .. "@ "
+        if props.shopState.selectedCurrency.name then
+            if productTextSize == "small" then
+                if props.config.settings.smallTextKristPayCompatability then
+                    productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
+                else
+                    productAddr = product.address .. "@ "
+                end
             end
+        else
+            productAddr = product.address
+        end
+        local kristpayHelperText = props.shopState.selectedCurrency.host
+        if props.shopState.selectedCurrency.name then
+            kristpayHelperText = product.address .. "@" .. props.shopState.selectedCurrency.name
         end
         local productBgColor = theme.colors.productBgColors[((i-1) % #theme.colors.productBgColors) + 1]
         if productTextSize == "large" then
@@ -330,13 +352,13 @@ local Main = Solyd.wrapComponent("Main", function(props)
             table.insert(flatCanvas, BasicText {
                 key="invis-" .. catName .. tostring(product.id),
                 display=display,
-                text=product.address .. "@" .. props.shopState.selectedCurrency.name,
+                text=kristpayHelperText,
                 x=1,
                 y=1+(i*5),
                 align="center",
                 bg=productBgColor,
                 color=productBgColor,
-                width=#(product.address .. "@" .. props.shopState.selectedCurrency.name)
+                width=#(kristpayHelperText)
             })
         elseif productTextSize == "medium" then
             table.insert(flatCanvas, SmolText {
@@ -386,13 +408,13 @@ local Main = Solyd.wrapComponent("Main", function(props)
             table.insert(flatCanvas, BasicText {
                 key="invis-" .. catName .. tostring(product.id),
                 display=display,
-                text=product.address .. "@" .. props.shopState.selectedCurrency.name,
+                text=kristpayHelperText,
                 x=1,
                 y=3+(i*3),
                 align="center",
                 bg=productBgColor,
                 color=productBgColor,
-                width=#(product.address .. "@" .. props.shopState.selectedCurrency.name)
+                width=#(kristpayHelperText)
             })
         else
             table.insert(flatCanvas, BasicText {
