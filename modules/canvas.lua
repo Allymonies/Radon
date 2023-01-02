@@ -454,9 +454,9 @@ function TeletextCanvas:composite(...)
     local partitionSize = 20
     local partitions = {}
     for y = 1, self.height*3, partitionSize do
-        partitions[floor(y/partitionSize)+1] = {}
+        partitions[ceil(y/partitionSize)] = {}
         for x = 1, self.width*2, partitionSize do
-            partitions[floor(y/partitionSize)+1][floor(x/partitionSize)+1] = {}
+            partitions[ceil(y/partitionSize)][ceil(x/partitionSize)] = {}
         end
     end
     -- local t2 = os.epoch("utc")
@@ -469,13 +469,13 @@ function TeletextCanvas:composite(...)
         -- if PixelCanvas.is(other) then
         local otherCanvas, otherX, otherY = other[1], other[2], other[3]
 
-        local originPartitionX = floor(otherX/partitionSize)*partitionSize+1
-        local originPartitionY = floor(otherY/partitionSize)*partitionSize+1
+        local originPartitionX = (ceil(otherX/partitionSize) - 1)*partitionSize + 1
+        local originPartitionY = (ceil(otherY/partitionSize) - 1)*partitionSize + 1
 
         for y = originPartitionY, otherY+otherCanvas.height-1, partitionSize do
             for x = originPartitionX, otherX+otherCanvas.width-1, partitionSize do
-                local px = floor(x/partitionSize)+1
-                local py = floor(y/partitionSize)+1
+                local px = ceil(x/partitionSize)
+                local py = ceil(y/partitionSize)
                 local partition = (partitions[py] or {})[px]
                 if partition then
                     partition[#partition + 1] = other
@@ -577,8 +577,8 @@ function TeletextCanvas:composite(...)
         for x, _ in pairs(row) do
             local targetX = ceil(x / 2)
             local currPixel = self.pixelCanvas.canvas[y][x]
-            partitionY = math.min(floor(y/partitionSize)+1, #partitions)
-            partitionX = math.min(floor(x/partitionSize)+1, #partitions[1])
+            partitionY = ceil(y/partitionSize) --math.min(floor(y/partitionSize)+1, #partitions)
+            partitionX = ceil(x/partitionSize) --math.min(floor(x/partitionSize)+1, #partitions[1])
             --print("getting partition (partizion size " .. partitionSize .. ") at x: " .. x .. ", y: " .. y .. " -> ".. floor(x/partitionSize)+1 .. ", " .. floor(y/partitionSize)+1)
             --print("Partitions size: " .. #partitions[1] .. ", " .. #partitions)
             local partition = partitions[partitionY][partitionX]

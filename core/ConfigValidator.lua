@@ -34,7 +34,11 @@ local configSchema = {
             headerColor = "color",
             footerBgColor = "color",
             footerColor = "color",
-            productBgColor = "color",
+            productBgColors = {
+                __type = "array",
+                __min = 1,
+                __entry = "color"
+            },
             outOfStockQtyColor = "color",
             lowQtyColor = "color",
             warningQtyColor = "color",
@@ -44,15 +48,17 @@ local configSchema = {
             priceColor = "color",
             addressColor = "color",
             currencyTextColor = "color",
-            currency1Color = "color",
-            currency2Color = "color",
-            currency3Color = "color",
-            currency4Color = "color",
+            currencyBgColors = {
+                __type = "array",
+                __min = 1,
+                __entry = "color"
+            },
             catagoryTextColor = "color",
-            category1Color = "color",
-            category2Color = "color",
-            category3Color = "color",
-            category4Color = "color",
+            categoryBgColors = {
+                __type = "array",
+                __min = 1,
+                __entry = "color"
+            },
             activeCategoryColor = "color",
         },
         palette = {
@@ -89,8 +95,7 @@ local configSchema = {
     },
     peripherals = {
         monitor = "string?",
-        self = "string?",
-        selfRelativeOutput = "string?",
+        modem = "modem?",
         exchangeChest = "chest?",
         outputChest = "chest",
     },
@@ -121,6 +126,97 @@ local productsSchema = {
     }
 }
 
+
+local function typeCheck(entryType, typeName, value, path)
+    if value then
+        if entryType == "table" and type(value) ~= "table" then
+            error("Config value " .. subpath .. " must be a table")
+        end
+        if entryType == "string" and type(value) ~= "string" then
+            error("Config value " .. subpath .. " must be a string")
+        end
+        if entryType == "number" and type(value) ~= "number" then
+            error("Config value " .. subpath .. " must be a number")
+        end
+        if entryType == "color" then
+            if type(value) ~= "number" then
+                error("Config value " .. subpath .. " must be a color")
+            end
+            m,n = math.frexp(value)
+            if m ~= 0.5 or n < 1 or n > 16 then
+                error("Config value " .. subpath .. " must be a color")
+            end
+        end
+        if entryType == "modem" then
+            if type(value) ~= "string" then
+                error("Config value " .. subpath .. " must be a modem name")
+            end
+            if peripheral.getType(value) ~= "modem" then
+                error("Config value " .. subpath .. " must refer to a modem")
+            end
+        end
+        if entryType == "chest" then
+            if type(value) ~= "string" then
+                error("Config value " .. subpath .. " must be a networked chest")
+            end
+            if not turtle and (value == "left" or value == "right" or value == "front" or value == "back" or value == "top" or value == "bottom") then
+                error("Config value " .. subpath .. " must not be a relative position")
+            end
+            if not turtle and value == "self" then
+                error("Config value " .. subpath .. " can only be self for turtles")
+            end
+            if value ~= "self" then
+                local chestMethods = peripheral.getMethods(value)
+                if not chestMethods then
+                    error("Config value " .. subpath .. " must refer to a valid peripheral")
+                end
+                local hasDropMethod = false
+                for i = 1, #chestMethods do
+                    if chestMethods[i] == "drop" then
+                        hasDropMethod = true
+                        break
+                    end
+                end
+                if not hasDropMethod then
+                    error("Config value " .. subpath .. " must refer to a peripheral with an inventory")
+                end
+            end
+        end
+        if entryType == "boolean" and type(value) ~= "boolean" then
+            error("Config value " .. subpath .. " must be a boolean")
+        end
+        if entryType:sub(1, 5) == "enum<" and entryType:sub(-1) == ">" then
+            local enum = entryType:sub(6, -2)
+            local found = false
+            for enumValue in enum:gmatch("[^|]+") do
+                enumValue = enumValue:sub(enumValue:find("'(.*)'")):sub(2, -2)
+                if value == enumValue then
+                    found = true
+                    break
+                end
+            end
+            if not found then
+                if typeName then
+                    error("Config value " .. subpath .. " must be entryType " .. typeName .. " matching " .. enum)
+                else
+                    error("Config value " .. subpath .. " must be one of " .. enum)
+                end
+            end
+        end
+        if entryType:sub(1, 6) == "regex<" and entryType:sub(-1) == ">" then
+            local regexString = entryType:sub(7, -2)
+            local regex = r2l.new(regexString)
+            if not regex(value) then
+                if typeName then
+                    error("Config value " .. subpath .. " must be entryType " .. typeName .. " matching " .. regexString)
+                else
+                    error("Config value " .. subpath .. " must match " .. regexString)
+                end
+            end
+        end
+    end
+end
+
 local function validate(config, schema, path)
     if not path then
         path = ""
@@ -141,7 +237,11 @@ local function validate(config, schema, path)
             end
             if schema.__entry then
                 for i = 1, #config do
-                    validate(config[i], schema.__entry, path .. "[" .. i .. "]")
+                    if type(config[i]) ~= "table" then
+                        typeCheck(schema.__entry, schema.__entry, config[i], path .. "[" .. i .. "]")
+                    else
+                        validate(config[i], schema.__entry, path .. "[" .. i .. "]")
+                    end
                 end
             end
         end
@@ -164,85 +264,7 @@ local function validate(config, schema, path)
                 if v:sub(-1) == "?" then
                     v = v:sub(1, -2)
                 end
-                if config[k] then
-                    if v == "table" and type(config[k]) ~= "table" then
-                        error("Config value " .. subpath .. " must be a table")
-                    end
-                    if v == "string" and type(config[k]) ~= "string" then
-                        error("Config value " .. subpath .. " must be a string")
-                    end
-                    if v == "number" and type(config[k]) ~= "number" then
-                        error("Config value " .. subpath .. " must be a number")
-                    end
-                    if v == "color" then
-                        if type(config[k]) ~= "number" then
-                            error("Config value " .. subpath .. " must be a color")
-                        end
-                        m,n = math.frexp(config[k])
-                        if m ~= 0.5 or n < 1 or n > 16 then
-                            error("Config value " .. subpath .. " must be a color")
-                        end
-                    end
-                    if v == "chest" then
-                        if type(config[k]) ~= "string" then
-                            error("Config value " .. subpath .. " must be a networked chest")
-                        end
-                        if not turtle and (config[k] == "left" or config[k] == "right" or config[k] == "front" or config[k] == "back" or config[k] == "top" or config[k] == "bottom") then
-                            error("Config value " .. subpath .. " must not be a relative position")
-                        end
-                        if not turtle and config[k] == "self" then
-                            error("Config value " .. subpath .. " can only be self for turtles")
-                        end
-                        if config[k] ~= "self" then
-                            local chestMethods = peripheral.getMethods(config[k])
-                            if not chestMethods then
-                                error("Config value " .. subpath .. " must refer to a valid peripheral")
-                            end
-                            local hasDropMethod = false
-                            for i = 1, #chestMethods do
-                                if chestMethods[i] == "drop" then
-                                    hasDropMethod = true
-                                    break
-                                end
-                            end
-                            if not hasDropMethod then
-                                error("Config value " .. subpath .. " must refer to a peripheral with an inventory")
-                            end
-                        end
-                    end
-                    if v == "boolean" and type(config[k]) ~= "boolean" then
-                        error("Config value " .. subpath .. " must be a boolean")
-                    end
-                    if v:sub(1, 5) == "enum<" and v:sub(-1) == ">" then
-                        local enum = v:sub(6, -2)
-                        local found = false
-                        for enumValue in enum:gmatch("[^|]+") do
-                            enumValue = enumValue:sub(enumValue:find("'(.*)'")):sub(2, -2)
-                            if config[k] == enumValue then
-                                found = true
-                                break
-                            end
-                        end
-                        if not found then
-                            if typeName then
-                                error("Config value " .. subpath .. " must be type " .. typeName .. " matching " .. enum)
-                            else
-                                error("Config value " .. subpath .. " must be one of " .. enum)
-                            end
-                        end
-                    end
-                    if v:sub(1, 6) == "regex<" and v:sub(-1) == ">" then
-                        local regexString = v:sub(7, -2)
-                        local regex = r2l.new(regexString)
-                        if not regex(config[k]) then
-                            if typeName then
-                                error("Config value " .. subpath .. " must be type " .. typeName .. " matching " .. regexString)
-                            else
-                                error("Config value " .. subpath .. " must match " .. regexString)
-                            end
-                        end
-                    end
-                end
+                typeCheck(v, typeName, config[k], subpath)
             end
         end
     end

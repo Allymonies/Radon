@@ -33,8 +33,13 @@ local products = require("products")
 ConfigValidator.validateConfig(config)
 ConfigValidator.validateProducts(products)
 
-if config.peripherals.outputChest == "self" and not config.peripherals.self then
-    error("Output chest is set to self, but no self peripheral name is set")
+local modem
+if config.peripherals.modem then
+    modem = peripheral.wrap(config.peripherals.modem)
+elseif peripheral.find("modem") then
+    modem = peripheral.find("modem")
+else
+    error("No modem found")
 end
 
 local display = Display.new({theme=config.theme, monitor=config.peripherals.monitor})
@@ -144,10 +149,6 @@ local Main = Solyd.wrapComponent("Main", function(props)
         productTextSize = theme.formatting.productTextSize
     end
 
-    if #shopProducts > 0 then
-        table.insert(flatCanvas, Rect { display=display, x=1, y=16, width=display.bgCanvas.width, height=1, color=theme.colors.productBgColor })
-    end
-
     local currency = props.shopState.selectedCurrency
     local currencySymbol = getCurrencySymbol(currency, productTextSize)
     for i = 1, #shopProducts do
@@ -202,15 +203,16 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 productAddr = product.address .. "@ "
             end
         end
+        local productBgColor = theme.colors.productBgColors[((i-1) % #theme.colors.productBgColors) + 1]
         if productTextSize == "large" then
             table.insert(flatCanvas, BigText {
                 key="qty-"..catName..tostring(product.id),
                 display=display,
                 text=tostring(product.quantity),
                 x=1,
-                y=17+((i-1)*15),
+                y=16+((i-1)*15),
                 align="center",
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=qtyColor,
                 width=maxQtyWidth
             })
@@ -219,9 +221,9 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 display=display,
                 text=product.name,
                 x=maxQtyWidth+1,
-                y=17+((i-1)*15),
+                y=16+((i-1)*15),
                 align=theme.formatting.productNameAlign,
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=productNameColor,
                 width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth
             })
@@ -230,9 +232,9 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 display=display,
                 text=tostring(productPrice) .. currencySymbol,
                 x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth,
-                y=17+((i-1)*15),
+                y=16+((i-1)*15),
                 align="right",
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=theme.colors.priceColor,
                 width=maxPriceWidth
             })
@@ -241,9 +243,9 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 display=display,
                 text=productAddr,
                 x=display.bgCanvas.width-3-maxAddrWidth,
-                y=17+((i-1)*15),
+                y=16+((i-1)*15),
                 align="right",
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=theme.colors.addressColor,
                 width=maxAddrWidth+4
             })
@@ -254,8 +256,8 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 x=1,
                 y=1+(i*5),
                 align="center",
-                bg=theme.colors.productBgColor,
-                color=theme.colors.productBgColor,
+                bg=productBgColor,
+                color=productBgColor,
                 width=#(product.address .. "@" .. props.shopState.selectedCurrency.name)
             })
         elseif productTextSize == "medium" then
@@ -264,9 +266,9 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 display=display,
                 text=tostring(product.quantity),
                 x=1,
-                y=17+((i-1)*9),
+                y=16+((i-1)*9),
                 align="center",
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=qtyColor,
                 width=maxQtyWidth
             })
@@ -275,9 +277,9 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 display=display,
                 text=product.name,
                 x=maxQtyWidth+1,
-                y=17+((i-1)*9),
+                y=16+((i-1)*9),
                 align=theme.formatting.productNameAlign,
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=productNameColor,
                 width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth
             })
@@ -286,9 +288,9 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 display=display,
                 text=tostring(productPrice) .. currencySymbol,
                 x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth,
-                y=17+((i-1)*9),
+                y=16+((i-1)*9),
                 align="right",
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=theme.colors.priceColor,
                 width=maxPriceWidth
             })
@@ -297,9 +299,9 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 display=display,
                 text=productAddr,
                 x=display.bgCanvas.width-3-maxAddrWidth,
-                y=17+((i-1)*9),
+                y=16+((i-1)*9),
                 align="right",
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=theme.colors.addressColor,
                 width=maxAddrWidth+4
             })
@@ -310,8 +312,8 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 x=1,
                 y=3+(i*3),
                 align="center",
-                bg=theme.colors.productBgColor,
-                color=theme.colors.productBgColor,
+                bg=productBgColor,
+                color=productBgColor,
                 width=#(product.address .. "@" .. props.shopState.selectedCurrency.name)
             })
         else
@@ -322,7 +324,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 x=1,
                 y=6+((i-1)*1),
                 align="center",
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=qtyColor,
                 width=maxQtyWidth
             })
@@ -333,7 +335,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 x=maxQtyWidth+1,
                 y=6+((i-1)*1),
                 align=theme.formatting.productNameAlign,
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=productNameColor,
                 width=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth-maxQtyWidth
             })
@@ -344,7 +346,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 x=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth,
                 y=6+((i-1)*1),
                 align="right",
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=theme.colors.priceColor,
                 width=maxPriceWidth
             })
@@ -355,7 +357,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 x=(display.bgCanvas.width/2)-1-maxAddrWidth,
                 y=6+((i-1)*1),
                 align="right",
-                bg=theme.colors.productBgColor,
+                bg=productBgColor,
                 color=theme.colors.addressColor,
                 width=maxAddrWidth+2
             })
@@ -367,16 +369,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
         for i = 1, #props.config.currencies do
             local symbol = getCurrencySymbol(props.config.currencies[i], productTextSize)
             local symbolSize = bigFont:getWidth(symbol)+6
-            local bgColor
-            if i % 4 == 1 then
-                bgColor = theme.colors.currency1Color
-            elseif i % 4 == 2 then
-                bgColor = theme.colors.currency2Color
-            elseif i % 4 == 3 then
-                bgColor = theme.colors.currency3Color
-            elseif i % 4 == 0 then
-                bgColor = theme.colors.currency4Color
-            end
+            local bgColor = theme.colors.currencyBgColors[((i-1) % #theme.colors.currencyBgColors) + 1]
             table.insert(flatCanvas, Button {
                 display = display,
                 align = "center",
@@ -404,14 +397,8 @@ local Main = Solyd.wrapComponent("Main", function(props)
             if i == selectedCategory then
                 categoryColor = theme.colors.activeCategoryColor
                 categoryName = "[" .. categoryName .. "]"
-            elseif i % 4 == 1 then
-                categoryColor = theme.colors.category1Color
-            elseif i % 4 == 2 then
-                categoryColor = theme.colors.category2Color
-            elseif i % 4 == 3 then
-                categoryColor = theme.colors.category3Color
-            elseif i % 4 == 0 then
-                categoryColor = theme.colors.category4Color
+            else
+                categoryColor = theme.colors.categoryBgColors[((i-1) % #theme.colors.categoryBgColors) + 1]
             end
             local categoryWidth = smolFont:getWidth(categoryName)+6
             categoryX = categoryX - categoryWidth - 2
@@ -500,7 +487,7 @@ local function diffCanvasStack(newStack)
     lastCanvasHash = newCanvasHash
 end
 
-local shopState = Core.ShopState.new(config, products)
+local shopState = Core.ShopState.new(config, products, modem)
 
 local Profiler = require("profile")
 

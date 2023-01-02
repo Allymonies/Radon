@@ -7,12 +7,13 @@ local Pricing = require("core.Pricing")
 local ShopState = {}
 local ShopState_mt = { __index = ShopState }
 
-function ShopState.new(config, products)
+function ShopState.new(config, products, modem)
     local self = setmetatable({}, ShopState_mt)
 
     self.running = false
     self.config = config
     self.products = products
+    self.modem = modem
     self.selectedCurrency = config.currencies[1]
     self.selectedCategory = 1
     self.numCategories = 1
@@ -94,19 +95,11 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                 print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.name .. " (refund " .. refundAmount .. ")")
                 if available > 0 then
                     for _, productSource in ipairs(productSources) do
-                        if isRelative(state.config.peripherals.outputChest) then
-                            -- Move to self first
-                            if not turtle then
-                                error("Relative output but not a turtle!")
-                            end
-                            peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.self, productSource.slot, productSource.amount, 1)
-                            peripheral.call(state.config.peripherals.outputChest, "pullItems", state.config.peripherals.selfRelativeOutput, productSource.slot, productSource.amount, 1)
-                            peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
-                        elseif state.config.peripherals.outputChest == "self" then
+                        if state.config.peripherals.outputChest == "self" then
                             if not turtle then
                                 error("Self output but not a turtle!")
                             end
-                            peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.self, productSource.slot, productSource.amount, 1)
+                            peripheral.call(productSource.inventory, "pushItems", state.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
                             if state.config.settings.dropDirection == "forward" then
                                 turtle.drop(productSource.amount)
                             elseif state.config.settings.dropDirection == "up" then
@@ -118,7 +111,7 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                             end
                         else
                             peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
-                            peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
+                            --peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
                         end
                     end
                     purchasedProduct.quantity = purchasedProduct.quantity - available

@@ -32,7 +32,9 @@ return {
             headerColor = colors.white,
             footerBgColor = colors.red,
             footerColor = colors.white,
-            productBgColor = colors.blue,
+            productBgColors = {
+                colors.blue,
+            },
             outOfStockQtyColor = colors.red,
             lowQtyColor = colors.orange,
             warningQtyColor = colors.yellow,
@@ -42,15 +44,19 @@ return {
             priceColor = colors.lime,
             addressColor = colors.white,
             currencyTextColor = colors.white,
-            currency1Color = colors.green,
-            currency2Color = colors.pink,
-            currency3Color = colors.lightBlue,
-            currency4Color = colors.yellow,
+            currencyBgColors = {
+                colors.green,
+                colors.pink,
+                colors.lightBlue,
+                colors.yellow,
+            },
             catagoryTextColor = colors.white,
-            category1Color = colors.pink,
-            category2Color = colors.orange,
-            category3Color = colors.lime,
-            category4Color = colors.lightBlue,
+            categoryBgColors = {
+                colors.pink,
+                colors.orange,
+                colors.lime,
+                colors.lightBlue,
+            },
             activeCategoryColor = colors.black,
         },
         palette = {
@@ -79,9 +85,8 @@ return {
             host = "ksbangelco",
             name = "radon.kst",
             pkey = "",
-            pkeyFormat = "raw", -- Either 'raw' or 'kristwallet', defaults to 'raw'
-            -- NOTE: It is not recommended to use kwallet, the best practice is to convert your pkey (using
-            -- kwallet format) to raw pkey yourself first, and then use that here. Thus improving security.
+            pkeyFormat = "raw", -- Currently must be 'raw', kwallet support is planned
+            -- You can get your raw pkey from kristweb or using https://pkey.its-em.ma/
             value = 1.0 -- Default scaling on item prices, can be overridden on a per-item basis
         },
         {
@@ -90,24 +95,21 @@ return {
             host = "tttttttttt",
             name = "radon.tst",
             pkey = "",
-            pkeyFormat = "raw", -- Either 'raw' or 'kristwallet', defaults to 'raw'
-            -- NOTE: It is not recommended to use kwallet, the best practice is to convert your pkey (using
-            -- kwallet format) to raw pkey yourself first, and then use that here. Thus improving security.
+            pkeyFormat = "raw", -- Currently must be 'raw', kwallet support is planned
+            -- You can get your raw pkey from kristweb or using https://pkey.its-em.ma/
             value = 0.1 -- Default scaling on item prices, can be overridden on a per-item basis
         },
     },
     peripherals = {
-        monitor = nil,
-        self = "west", -- Cardinal direction or network name of the turtle
-        -- relative to storage chest(s) used
-        -- only required if output chest is "self"
-        -- or a relative position
-        -- ex: "west", "turtle_1"
-        selfRelativeOutput = nil, -- Same as above but for output chest
+        monitor = nil, -- Modem to display on, if not specified, will use the first monitor found
+        modem = nil, -- Modem for inventories, if not specified, will use the first modem found
         exchangeChest = nil,
         outputChest = "self", -- Chest peripheral or self
+        -- NOTE: Chest dropping is NYI in plethora 1.19, so do not use unless
+        -- the output chest can be accessed
     },
     exchange = {
+        -- Not yet implemented
         enabled = true,
         node = "https://localhost:8000/"
     }
