@@ -15,7 +15,7 @@ return {
         footer = "/pay <item>@%name% <amt>",
         footerNoName = "/pay %addr% <amt> <item>",
         refundRemaining = "Here is the funds remaining after your purchase!",
-        refundOutofStock = "Sorry, that item is out of stock!",
+        refundOutOfStock = "Sorry, that item is out of stock!",
         refundAtLeastOne = "You must purchase at least one of this product!",
         refundInvalidProduct = "You must supply a valid product to purchase!",
         refundNoProduct = "You must supply a product to purchase!",

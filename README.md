@@ -24,6 +24,8 @@ Finally, set up some products in `products.lua`. Some example products are given
 
 Optionally, you can supply `category`, `priceOverrides`, and `predicates`. For more information on these, see the example `products.lua` file.
 
+If your shop has multiple categories or currencies and you're playing on SwitchCraft, you'll want to `/monitortrust .public` on your plot so that players can right click on your monitor to change categories and currencies.
+
 # Advanced Settings
 
 Radon is designed to be highly configurable. Look through `config.lua` for what you may want to change to suit your needs. There are a few tables or categories within `config.lua`:
