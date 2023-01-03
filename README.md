@@ -14,7 +14,9 @@ Attach a wired modem to your turtle. Then add a chest on that wired network (it 
 
 Open `config.lua` and change `branding.title` to the name of your shop you want shown in the header.
 
-Next change `currencies.host`, `currencies.name`, and `currencies.pkey` for the krist currency to your krist address, the krist name you will be using, and your krist address' private key, respectively. You can then either remove/comment out the tenebra currency, or fill in your respective details for that.
+Next change `currencies.host`, `currencies.name`, and `currencies.pkey` for the krist currency to your krist address, the krist name you will be using (or nil), and your krist address' private key, respectively. You can then either remove/comment out the tenebra currency, or fill in your respective details for that.
+
+**WARNING**: If you do not use a name for your shop, any transaction that doesn't purchase an item to your address will be refunded. Do not run the shop on your personal address you will be receiving krist to if you are not using a name.
 
 Finally, set up some products in `products.lua`. Some example products are given. Required fields are:
 - `modid`: The item id of the item, with the namespace or mod. Example: `"plethora:neural_interface"`
