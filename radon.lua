@@ -1,7 +1,7 @@
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
-local version = "1.1.4"
+local version = "1.1.5"
 
 --- Imports
 local _ = require("util.score")
@@ -277,12 +277,12 @@ local Main = Solyd.wrapComponent("Main", function(props)
             local productPrice = Pricing.getProductPrice(product, props.shopState.selectedCurrency)
             if productTextSize == "large" then
                 maxAddrWidth = math.max(maxAddrWidth, getWidth(productAddr, productTextSize)+2)
-                maxQtyWidth = math.max(maxQtyWidth, getWidth(tostring(product.quantity), productTextSize)+4)
+                maxQtyWidth = math.max(maxQtyWidth, getWidth(tostring(product.quantity), productTextSize)+4+2)
                 maxPriceWidth = math.max(maxPriceWidth, getWidth(tostring(productPrice) .. currencySymbol, productTextSize)+2)
                 maxNameWidth = math.max(maxNameWidth, getWidth(product.name, productTextSize)+2)
             elseif productTextSize == "medium" then
                 maxAddrWidth = math.max(maxAddrWidth, getWidth(productAddr, productTextSize)+2)
-                maxQtyWidth = math.max(maxQtyWidth, getWidth(tostring(product.quantity), productTextSize)+4)
+                maxQtyWidth = math.max(maxQtyWidth, getWidth(tostring(product.quantity), productTextSize)+4+2)
                 maxPriceWidth = math.max(maxPriceWidth, getWidth(tostring(productPrice) .. currencySymbol, productTextSize)+2)
                 maxNameWidth = math.max(maxNameWidth, getWidth(product.name, productTextSize)+2)
             else
@@ -495,7 +495,7 @@ local Main = Solyd.wrapComponent("Main", function(props)
     if #props.config.currencies > 1 then
         for i = 1, #props.config.currencies do
             local symbol = getCurrencySymbol(props.config.currencies[i], "large")
-            local symbolSize = bigFont:getWidth(symbol)+6
+            local symbolSize = bigFont:getWidth(symbol)+6+1
             local bgColor = theme.colors.currencyBgColors[((i-1) % #theme.colors.currencyBgColors) + 1]
             table.insert(flatCanvas, Button {
                 display = display,

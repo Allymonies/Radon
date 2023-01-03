@@ -124,17 +124,6 @@ return {
         -- NOTE: Chest dropping is NYI in plethora 1.19, so do not use unless
         -- the output chest can be accessed
     },
-    shopSync = {
-        enabled = false,
-        name = "Radon Shop",
-        description = "Shop for selling valuable items",
-        owner = "Allymonies",
-        location = {
-            coordinates = { 227, 70, -175 },
-            description = "East of spawn, just passed the ISA",
-            dimension = "overworld"
-        }
-    },
     exchange = {
         -- Not yet implemented
         enabled = true,
