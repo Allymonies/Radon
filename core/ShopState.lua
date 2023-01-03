@@ -37,14 +37,16 @@ end
 local function parseMeta(transactionMeta)
     local meta = {}
     local i = 1
-    for metaEntry in transactionMeta:gmatch("([^;]+)") do
-        if metaEntry:find("=") then
-            local key, value = metaEntry:match("([^=]+)=([^=]+)")
-            meta[key] = value
-        else
-            meta[metaEntry] = true
-            meta[i] = metaEntry
-            i = i + 1
+    if transactionMeta and #transactionMeta > 0 then
+        for metaEntry in transactionMeta:gmatch("([^;]+)") do
+            if metaEntry:find("=") then
+                local key, value = metaEntry:match("([^=]+)=([^=]+)")
+                meta[key] = value
+            else
+                meta[metaEntry] = true
+                meta[i] = metaEntry
+                i = i + 1
+            end
         end
     end
     return meta
