@@ -146,8 +146,10 @@ local function findProductItemsFrom(product, quantity, items, cached)
         local item = items[i]
         local inventory = item.inventory
         local slot = item.slot
-        if cached or item.name == product.modid then
-            item = peripheral.call(inventory, "getItemDetail", slot)
+        if item.name == product.modid then
+            if cached or product.predicates then
+                item = peripheral.call(inventory, "getItemDetail", slot)
+            end
             if item then
                 if item.name ~= product.modid or (product.predicates and not partialObjectMatches(product.predicates, item)) then
                     item = nil

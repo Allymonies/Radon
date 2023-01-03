@@ -1,7 +1,7 @@
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
-local version = "1.1.6"
+local version = "1.1.7"
 
 --- Imports
 local _ = require("util.score")
@@ -45,6 +45,9 @@ else
     end)
     if not modem then
         error("No modem found")
+    end
+    if not modem.getNameLocal() then
+        error("Modem is not connected! Turn it on by right clicking it!")
     end
 end
 

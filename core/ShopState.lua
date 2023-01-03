@@ -111,6 +111,9 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                             if not turtle then
                                 error("Self output but not a turtle!")
                             end
+                            if not state.modem.getNameLocal() then
+                                error("Modem is not connected! Try right clicking it")
+                            end
                             peripheral.call(productSource.inventory, "pushItems", state.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
                             if state.config.settings.dropDirection == "forward" then
                                 turtle.drop(productSource.amount)
@@ -191,7 +194,7 @@ local function runShop(state)
                     if sentName and transactionCurrency.name and transactionCurrency.name:find(".") then
                         sentName = sentName .. "." .. nameSuffix
                     end
-                    if transaction.from ~= transactionCurrency.host and (not transactionCurrency.name or sentName and sentName:lower() == transactionCurrency.name:lower()) then
+                    if transaction.from ~= transactionCurrency.host and (not transactionCurrency.name and not sentName) or (sentName and sentName:lower() == transactionCurrency.name:lower()) then
                         local meta = parseMeta(transaction.metadata)
                         if transaction.to == transactionCurrency.host and not transactionCurrency.name and not sentMetaname then
                             sentMetaname = meta[1]
