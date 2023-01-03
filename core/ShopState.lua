@@ -191,7 +191,7 @@ local function runShop(state)
                     if sentName and transactionCurrency.name and transactionCurrency.name:find(".") then
                         sentName = sentName .. "." .. nameSuffix
                     end
-                    if not transactionCurrency.name or sentName and sentName:lower() == transactionCurrency.name:lower() then
+                    if transaction.from ~= transactionCurrency.host and (not transactionCurrency.name or sentName and sentName:lower() == transactionCurrency.name:lower()) then
                         local meta = parseMeta(transaction.metadata)
                         if transaction.to == transactionCurrency.host and not transactionCurrency.name and not sentMetaname then
                             sentMetaname = meta[1]
