@@ -4,6 +4,10 @@ A next-generation highly-configurable Krist shop with categories, nameless shops
 
 For any support needs or feature requests, contact Allymonies. Radon is in active development!
 
+# Installation
+
+While you can install Radon with the Howlfile, or just copying all the files to the computer, it is recommended to use the installer, `pastebin run TPG238zDDP` (SCPaste https://p.sc3.io/TPG238zDDP). This will download the required files, `radon.lua`, `config.lua`, and `products.lua`.
+
 # Setup
 
 Attach a wired modem to your turtle. Then add a chest on that wired network (it must be connected to a wired modem on that network). Make sure a monitor is next to the turtle.
