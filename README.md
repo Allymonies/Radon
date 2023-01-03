@@ -1,0 +1,33 @@
+# Radon
+
+A next-generation highly-configurable Krist shop with categories, nameless shops, and multi-currency support.
+
+For any support needs or feature requests, contact Allymonies. Radon is in active development!
+
+# Setup
+
+Attach a wired modem to your turtle. Then add a chest on that wired network (it must be connected to a wired modem on that network). Make sure a monitor is next to the turtle.
+
+Open `config.lua` and change `branding.title` to the name of your shop you want shown in the header.
+
+Next change `currencies.host`, `currencies.name`, and `currencies.pkey` for the krist currency to your krist address, the krist name you will be using, and your krist address' private key, respectively. You can then either remove/comment out the tenebra currency, or fill in your respective details for that.
+
+Finally, set up some products in `products.lua`. Some example products are given. Required fields are:
+- `modid`: The item id of the item, with the namespace or mod. Example: `"plethora:neural_interface"`
+- `name`: The description of the item shown to the user. Example: `"Neural Interface"`
+- `address`: The metaname or required meta to identify the item being purchased. Example: `"ni"`
+- `price`: The price of the item. The price in a given currency will be calculated by dividing this price by the value of the currency used. Example: `50`
+
+Optionally, you can supply `category`, `priceOverrides`, and `predicates`. For more information on these, see the example `products.lua` file.
+
+# Advanced Settings
+
+Radon is designed to be highly configurable. Look through `config.lua` for what you may want to change to suit your needs. There are a few tables or categories within `config.lua`:
+- `settings` controls general settings for behavior of the shop.
+- `lang` controls strings used throughout the program, such as the footer or refund messages.
+- `theme.formatting` controls the formatting of elements, mostly alignment
+- `theme.colors` controls the colors of every element. Alternating row background colors can be accomplished by adding more entries to the `theme.colors.productBgColors` table
+- `theme.palette` controls the color palette used for the shop. Use this to fine tune the colors you want
+- `sounds` controls the sounds that get played in various situations
+- `currencies` lists the currencies accepted by the shop. If you don't have a name on a given currency, you can leave it out or set it to nil to use nameless mode.
+- `peripherals` defines peripherals to be used for the shop. Most of these can be left at nil to be automatically set. `peripherals.outputChest` should generally be left on `"self"` as setting it to a chest will cause items to be inserted into the chest without dropping them, as chest dropping is not yet implemented in plethora 1.19
