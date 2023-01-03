@@ -1,19 +1,26 @@
 local Krypton = require("Krypton")
 local ScanInventory = require("core.inventory.ScanInventory")
 local Pricing = require("core.Pricing")
+local sound = require("util.sound")
+
+local shopSyncFrequency = 30
+local shopSyncChannel = 9773
 
 ---@class ShopState
 ---@field running boolean
 local ShopState = {}
 local ShopState_mt = { __index = ShopState }
 
-function ShopState.new(config, products, modem)
+function ShopState.new(config, products, modem, shopSyncModem, speaker, version)
     local self = setmetatable({}, ShopState_mt)
 
     self.running = false
     self.config = config
     self.products = products
     self.modem = modem
+    self.shopSyncModem = shopSyncModem
+    self.speaker = speaker
+    self.version = version
     self.selectedCurrency = config.currencies[1]
     self.selectedCategory = 1
     self.numCategories = 1
@@ -121,6 +128,9 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                     if refundAmount > 0 then
                         refund(transactionCurrency, transaction.from, meta, refundAmount, state.config.lang.refundRemaining)
                     end
+                    if state.config.settings.playSounds then
+                        sound.playSound(state.speaker, state.config.sounds.purchase)
+                    end
                 else
                     refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
                 end
@@ -217,6 +227,68 @@ local function runShop(state)
                 state.productsChanged = true
             end
             sleep(math.min(1, state.config.settings.categoryCycleFrequency))
+        end
+    end, function()
+        while state.running do
+            sleep(shopSyncFrequency)
+            if state.config.shopSync and state.config.shopSync.enabled and state.shopSyncModem then
+                local items = {}
+                for i = 1, #state.products do
+                    local product = state.products[i]
+                    local prices = {}
+                    local nbt = nil
+                    local predicates = nil
+                    if product.predicates then
+                        nbt = ""
+                        predicates = product.predicates
+                    end
+                    for j = 1, #state.config.currencies do
+                        local currency = state.config.currencies[j]
+                        local currencyName = "KST"
+                        if currency.krypton and currency.krypton.currency and currency.krypton.currency.currency_symbol then
+                            currencyName = currency.krypton.currency.currency_symbol
+                        end
+                        local address = currency.host
+                        local requiredMeta = nil
+                        if currency.name then
+                            address = product.address .. "@" .. currency.name
+                        else
+                            requiredMeta = product.address
+                        end
+                        table.insert(prices, {
+                            value = product.price / currency.value,
+                            currency = currencyName,
+                            address = address,
+                            --requiredMeta = requiredMeta
+                        })
+                    end
+                    table.insert(items, {
+                        price = prices,
+                        item = {
+                            name = product.modid,
+                            displayName = product.name,
+                            nbt = nbt,
+                            --predicates = predicates
+                        }
+                    })
+                end
+                state.shopSyncModem.transmit(shopSyncChannel, os.getComputerID(), {
+                    type = "ShopSync",
+                    info = {
+                        name = state.config.shopSync.name,
+                        description = state.config.shopSync.description,
+                        owner = state.config.shopSync.owner,
+                        software = {
+                            name = "Radon",
+                            version = state.version
+                        },
+                        location = state.config.shopSync.location,
+                    },
+                    items = {
+
+                    }
+                })
+            end
         end
     end, unpack(kryptonListeners))
 end

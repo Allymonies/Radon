@@ -1,10 +1,11 @@
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
-local version = "1.1.3"
+local version = "1.1.4"
 
 --- Imports
 local _ = require("util.score")
+local sound = require("util.sound")
 
 local Display = require("modules.display")
 
@@ -38,10 +39,36 @@ ConfigValidator.validateProducts(products)
 local modem
 if config.peripherals.modem then
     modem = peripheral.wrap(config.peripherals.modem)
-elseif peripheral.find("modem") then
-    modem = peripheral.find("modem")
 else
-    error("No modem found")
+    modem = peripheral.find("modem", function(pName)
+        return not peripheral.wrap(pName).isWireless()
+    end)
+    if not modem then
+        error("No modem found")
+    end
+end
+
+local shopSyncModem
+if config.peripherals.shopSyncModem then
+    shopSyncModem = peripheral.wrap(config.peripherals.shopSyncModem)
+else
+    shopSyncModem = peripheral.find("modem", function(pName)
+        return peripheral.wrap(pName).isWireless()
+    end)
+    if not shopSyncModem and config.shopSync and config.shopSync.enabled then
+        error("No wireless modem found but ShopSync is enabled!")
+    end
+end
+
+local speaker
+if config.peripherals.speaker then
+    speaker = peripheral.wrap(config.peripherals.speaker)
+else
+    speaker = peripheral.find("speaker")
+end
+
+if config.shopSync and config.shopSync.enabled and not config.shopSync.force then
+    error("ShopSync is not yet finalized, please update Radon to use this feature, or set config.shopSync.force to true to use current ShopSync spec")
 end
 
 local display = Display.new({theme=config.theme, monitor=config.peripherals.monitor})
@@ -482,6 +509,9 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 onClick = function()
                     props.shopState.selectedCurrency = props.config.currencies[i]
                     props.shopState.lastTouched = os.epoch("utc")
+                    if config.settings.playSounds then
+                        sound.playSound(speaker, config.sounds.button)
+                    end
                 end
             })
             currencyX = currencyX + symbolSize + 2
@@ -515,6 +545,9 @@ local Main = Solyd.wrapComponent("Main", function(props)
                 onClick = function()
                     props.shopState.selectedCategory = i
                     props.shopState.lastTouched = os.epoch("utc")
+                    if config.settings.playSounds then
+                        sound.playSound(speaker, config.sounds.button)
+                    end
                     -- canvas:markRect(1, 16, canvas.width, canvas.height-16)
                 end
             })
@@ -587,7 +620,7 @@ local function diffCanvasStack(newStack)
     lastCanvasHash = newCanvasHash
 end
 
-local shopState = Core.ShopState.new(config, products, modem)
+local shopState = Core.ShopState.new(config, products, modem, shopSyncModem, speaker, version)
 
 local Profiler = require("profile")
 
@@ -621,7 +654,7 @@ local success, err = pcall(function() ShopRunner.launchShop(shopState, function(
             deltaTimer = os.startTimer(0)
 
             hooks.tickAnimations(dt)
-        elseif name == "monitor_touch" then
+        elseif name == "monitor_touch" and e[2] == peripheral.getName(display.mon) then
             local x, y = e[3], e[4]
             local node = hooks.findNodeAt(context.aabb, x, y)
             if node then

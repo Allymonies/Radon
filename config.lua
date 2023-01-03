@@ -9,6 +9,7 @@ return {
         activityTimeout = 60,
         dropDirection = "forward",
         smallTextKristPayCompatability = true,
+        playSounds = true,
     },
     lang = {
         footer = "/pay <item>@%name% <amt>",
@@ -79,6 +80,18 @@ return {
             [colors.white] = 0xECECEC
         }
     },
+    sounds = {
+        button = {
+            name = "minecraft:block.note_block.hat",
+            volume = 0.5,
+            pitch = 1.1
+        },
+        purchase = {
+            name = "minecraft:block.note_block.pling",
+            volume = 0.5,
+            pitch = 2
+        },
+    },
     currencies = {
         {
             id = "krist", -- if not krist or tenebra, must supply endpoint
@@ -102,12 +115,25 @@ return {
         },
     },
     peripherals = {
-        monitor = nil, -- Modem to display on, if not specified, will use the first monitor found
-        modem = nil, -- Modem for inventories, if not specified, will use the first modem found
+        monitor = nil, -- Monitor to display on, if not specified, will use the first monitor found
+        modem = nil, -- Modem for inventories, if not specified, will use the first wired modem found
+        speaker = nil, -- Speaker to play sounds on, if not specified, will use the first speaker found
+        shopSyncModem = nil, -- Modem for ShopSync, if not specified, will use the first wireless modem found
         exchangeChest = nil,
         outputChest = "self", -- Chest peripheral or self
         -- NOTE: Chest dropping is NYI in plethora 1.19, so do not use unless
         -- the output chest can be accessed
+    },
+    shopSync = {
+        enabled = false,
+        name = "Radon Shop",
+        description = "Shop for selling valuable items",
+        owner = "Allymonies",
+        location = {
+            coordinates = { 227, 70, -175 },
+            description = "East of spawn, just passed the ISA",
+            dimension = "overworld"
+        }
     },
     exchange = {
         -- Not yet implemented

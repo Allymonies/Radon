@@ -81,6 +81,10 @@ local configSchema = {
             [colors.white] = "number"
         }
     },
+    sounds = {
+        button = "sound",
+        purchase = "sound",
+    },
     currencies = {
         __type = "array",
         __min = 1,
@@ -96,9 +100,27 @@ local configSchema = {
     },
     peripherals = {
         monitor = "string?",
+        speaker = "speaker?",
         modem = "modem?",
+        shopSyncModem = "modem?",
         exchangeChest = "chest?",
         outputChest = "chest",
+    },
+    shopSync = {
+        enabled = "boolean?",
+        name = "string?",
+        description = "string?",
+        owner = "string?",
+        location = {
+            coordinates = {
+                __type = "array?",
+                __min = 3,
+                __max = 3,
+                __entry = "number"
+            },
+            description = "string?",
+            dimension = "enum<'overworld' | 'nether' | 'end'>?: dimension"
+        }
     },
     exchange = {
         enabled = "boolean",
@@ -156,6 +178,14 @@ local function typeCheck(entryType, typeName, value, path)
                 error("Config value " .. subpath .. " must refer to a modem")
             end
         end
+        if entryType == "speaker" then
+            if type(value) ~= "string" then
+                error("Config value " .. subpath .. " must be a speaker name")
+            end
+            if peripheral.getType(value) ~= "speaker" then
+                error("Config value " .. subpath .. " must refer to a speaker")
+            end
+        end
         if entryType == "chest" then
             if type(value) ~= "string" then
                 error("Config value " .. subpath .. " must be a networked chest")
@@ -181,6 +211,20 @@ local function typeCheck(entryType, typeName, value, path)
                 if not hasDropMethod then
                     error("Config value " .. subpath .. " must refer to a peripheral with an inventory")
                 end
+            end
+        end
+        if entryType == "sound" then
+            if type(value) ~= "table" then
+                error("Config value " .. subpath .. " must be a sound")
+            end
+            if not value.name or type(value.name) ~= "string" then
+                error("Config value " .. subpath .. " must have a name")
+            end
+            if not value.volume or type(value.volume) ~= "number" then
+                error("Config value " .. subpath .. " must have a volume")
+            end
+            if not value.pitch or type(value.pitch) ~= "number" then
+                error("Config value " .. subpath .. " must have a pitch")
             end
         end
         if entryType == "boolean" and type(value) ~= "boolean" then
@@ -247,6 +291,9 @@ local function validate(config, schema, path)
             end
         end
     else
+        if not config then
+            config = {}
+        end
         for k,v in pairs(schema) do
             subpath = path .. "." .. k
             if type(v) == "table" then
