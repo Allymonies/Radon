@@ -10,6 +10,7 @@ return {
         dropDirection = "forward",
         smallTextKristPayCompatability = true,
         playSounds = true,
+        showFooter = true,
     },
     lang = {
         footer = "/pay <item>@%name% <amt>",
@@ -26,7 +27,7 @@ return {
             headerAlign = "center",
             footerAlign = "center",
             productNameAlign = "center",
-            productTextSize = "auto"
+            layout = "auto"
         },
         colors = {
             bgColor = colors.lightGray,
@@ -103,7 +104,7 @@ return {
             -- You can get your raw pkey from kristweb or using https://pkey.its-em.ma/
             value = 1.0 -- Default scaling on item prices, can be overridden on a per-item basis
         },
-        {
+        --[[{
             id = "tenebra", -- if not krist or tenebra, must supply endpoint
             -- node = "https://krist.dev"
             host = "tttttttttt",
@@ -112,7 +113,7 @@ return {
             pkeyFormat = "raw", -- Currently must be 'raw', kwallet support is planned
             -- You can get your raw pkey from kristweb or using https://pkey.its-em.ma/
             value = 0.1 -- Default scaling on item prices, can be overridden on a per-item basis
-        },
+        },--]]
     },
     peripherals = {
         monitor = nil, -- Monitor to display on, if not specified, will use the first monitor found

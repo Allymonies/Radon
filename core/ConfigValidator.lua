@@ -11,6 +11,8 @@ local configSchema = {
         activityTimeout = "number",
         dropDirection = "enum<'forward' | 'up' | 'down' | 'north' | 'south' | 'east' | 'west'>: direction",
         smallTextKristPayCompatability = "boolean",
+        playSounds = "boolean",
+        showFooter = "boolean"
     },
     lang = {
         footer = "string",
@@ -27,7 +29,7 @@ local configSchema = {
             headerAlign = "enum<'left' | 'center' | 'right'>: alignment",
             footerAlign = "enum<'left' | 'center' | 'right'>: alignment",
             productNameAlign = "enum<'left' | 'center' | 'right'>: alignment",
-            productTextSize = "enum<'small' | 'medium' | 'large' | 'auto'>: text size",
+            layout = "enum<'small' | 'medium' | 'large' | 'auto'>: layout",
         },
         colors = {
             bgColor = "color",
