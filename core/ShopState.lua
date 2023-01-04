@@ -2,6 +2,7 @@ local Krypton = require("Krypton")
 local ScanInventory = require("core.inventory.ScanInventory")
 local Pricing = require("core.Pricing")
 local sound = require("util.sound")
+local eventHook = require("util.eventHook")
 
 local shopSyncFrequency = 30
 local shopSyncChannel = 9773
@@ -136,17 +137,32 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                     if state.config.settings.playSounds then
                         sound.playSound(state.speaker, state.config.sounds.purchase)
                     end
+                    if state.config.hooks and state.config.hooks.purchase then
+                        eventHook.execute(state.config.hooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+                    end
                 else
                     refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
+                    if state.config.hooks and state.config.hooks.failedPurchase then
+                        eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundOutOfStock)
+                    end
                 end
             else
                 refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
+                if state.config.hooks and state.config.hooks.failedPurchase then
+                    eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundOutOfStock)
+                end
             end
         else
             refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundAtLeastOne, true)
+            if state.config.hooks and state.config.hooks.failedPurchase then
+                eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundAtLeastOne)
+            end
         end
     else
         refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundInvalidProduct, true)
+        if state.config.hooks and state.config.hooks.failedPurchase then
+            eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundInvalidProduct)
+        end
     end
 end
 
@@ -194,7 +210,7 @@ local function runShop(state)
                     if sentName and transactionCurrency.name and transactionCurrency.name:find(".") then
                         sentName = sentName .. "." .. nameSuffix
                     end
-                    if transaction.from ~= transactionCurrency.host and (not transactionCurrency.name and not sentName) or (sentName and sentName:lower() == transactionCurrency.name:lower()) then
+                    if transaction.from ~= transactionCurrency.host and (not transactionCurrency.name and not sentName) or (transactionCurrency.name and sentName and sentName:lower() == transactionCurrency.name:lower()) then
                         local meta = parseMeta(transaction.metadata)
                         if transaction.to == transactionCurrency.host and not transactionCurrency.name and not sentMetaname then
                             sentMetaname = meta[1]
@@ -205,10 +221,16 @@ local function runShop(state)
                                 -- Success :D
                             else
                                 refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundError, true)
+                                if state.config.hooks and state.config.hooks.failedPurchase then
+                                    eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundError)
+                                end
                                 error(err)
                             end
                         else
                             refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundNoProduct, true)
+                            if state.config.hooks and state.config.hooks.failedPurchase then
+                                eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundNoProduct)
+                            end
                         end
                     end
                 end

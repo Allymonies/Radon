@@ -108,6 +108,12 @@ local configSchema = {
         exchangeChest = "chest?",
         outputChest = "chest",
     },
+    hooks = {
+        start = "function?",
+        purchase = "function?",
+        failedPurchase = "function?",
+        programError = "function?",
+    },
     shopSync = {
         enabled = "boolean?",
         name = "string?",
@@ -162,6 +168,9 @@ local function typeCheck(entryType, typeName, value, path)
         end
         if entryType == "number" and type(value) ~= "number" then
             error("Config value " .. subpath .. " must be a number")
+        end
+        if entryType == "function" and type(value) ~= "function" then
+            error("Config value " .. subpath .. " must be a function")
         end
         if entryType == "color" then
             if type(value) ~= "number" then

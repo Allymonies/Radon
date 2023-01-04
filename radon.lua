@@ -1,11 +1,12 @@
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
-local version = "1.1.8"
+local version = "1.1.9"
 
 --- Imports
 local _ = require("util.score")
 local sound = require("util.sound")
+local eventHook = require("util.eventHook")
 
 local Display = require("modules.display")
 
@@ -636,6 +637,9 @@ local deltaTimer = os.startTimer(0)
 local success, err = pcall(function() ShopRunner.launchShop(shopState, function()
     -- Profiler:activate()
     print("Radon " .. version .. " has started")
+    if config.hooks and config.hooks.start then
+        eventHook.execute(config.hooks.start, version, config, products)
+    end
     while true do
         tree = Solyd.render(tree, Main {t = t, config = config, shopState = shopState})
 
@@ -688,6 +692,9 @@ end
 
 os.pullEvent = oldPullEvent
 if not success then
+    if config.hooks and config.hooks.programError then
+        eventHook.execute(config.hooks.programError, err)
+    end
     error(err)
 end
 print("Radon terminated, goodbye!")
