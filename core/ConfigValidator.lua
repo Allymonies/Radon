@@ -105,6 +105,7 @@ local configSchema = {
         speaker = "speaker?",
         modem = "modem?",
         shopSyncModem = "modem?",
+        blinker = "enum<'left' | 'right' | 'front' | 'back' | 'top' | 'bottom'>?: side",
         exchangeChest = "chest?",
         outputChest = "chest",
     },
@@ -113,6 +114,7 @@ local configSchema = {
         purchase = "function?",
         failedPurchase = "function?",
         programError = "function?",
+        blink = "function?",
     },
     shopSync = {
         enabled = "boolean?",

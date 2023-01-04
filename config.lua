@@ -120,6 +120,8 @@ return {
         modem = nil, -- Modem for inventories, if not specified, will use the first wired modem found
         speaker = nil, -- Speaker to play sounds on, if not specified, will use the first speaker found
         shopSyncModem = nil, -- Modem for ShopSync, if not specified, will use the first wireless modem found
+        blinker = nil, -- Side that a redstone lamp or other redstone device is on
+        -- Will be toggled on and off every 3 seconds to indicate that the shop is online
         exchangeChest = nil,
         outputChest = "self", -- Chest peripheral or self
         -- NOTE: Chest dropping is NYI in plethora 1.19, so do not use unless
@@ -129,7 +131,8 @@ return {
         start = nil, -- function(version, config, products)
         purchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency)
         failedPurchase = nil, -- function(transaction, transactionCurrency, product, errorMessage)
-        programError = nil -- function(err)
+        programError = nil, -- function(err)
+        blink = nil, -- function(blinkState) called every 3 seconds while shop is running
     },
     exchange = {
         -- Not yet implemented

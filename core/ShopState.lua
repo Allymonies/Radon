@@ -4,6 +4,7 @@ local Pricing = require("core.Pricing")
 local sound = require("util.sound")
 local eventHook = require("util.eventHook")
 
+local blinkFrequency = 3
 local shopSyncFrequency = 30
 local shopSyncChannel = 9773
 
@@ -254,6 +255,18 @@ local function runShop(state)
                 state.productsChanged = true
             end
             sleep(math.min(1, state.config.settings.categoryCycleFrequency))
+        end
+    end, function()
+        local blinkState = false
+        while state.running do
+            blinkState = not blinkState
+            if state.config.peripherals.blinker then
+                redstone.setOutput(state.config.peripherals.blinker, blinkState) 
+            end
+            if state.config.hooks and state.config.hooks.blink then
+                eventHook.execute(state.config.hooks.blink, blinkState)
+            end
+            sleep(blinkFrequency)
         end
     end, function()
         while state.running do
