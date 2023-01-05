@@ -93,7 +93,6 @@ local configSchema = {
         __entry = {
             id = "string",
             node = "string?",
-            host = [[regex<^[a-z0-9]{10}$>: address]],
             name = "string?",
             pkey = "string",
             pkeyFormat = "enum<'raw' | 'kristwallet'>: pkey format",
@@ -111,6 +110,7 @@ local configSchema = {
     },
     hooks = {
         start = "function?",
+        prePurchase = "function?",
         purchase = "function?",
         failedPurchase = "function?",
         programError = "function?",

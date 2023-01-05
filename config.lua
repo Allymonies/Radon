@@ -20,7 +20,8 @@ return {
         refundAtLeastOne = "You must purchase at least one of this product!",
         refundInvalidProduct = "You must supply a valid product to purchase!",
         refundNoProduct = "You must supply a product to purchase!",
-        refundError = "An error occurred while processing your purchase!"
+        refundError = "An error occurred while processing your purchase!",
+        refundDenied = "This purchase has been denied"
     },
     theme = {
         formatting = {
@@ -97,10 +98,9 @@ return {
         {
             id = "krist", -- if not krist or tenebra, must supply endpoint
             -- node = "https://krist.dev"
-            host = "ksbangelco",
             name = "radon.kst",
             pkey = "",
-            pkeyFormat = "raw", -- Currently must be 'raw', kwallet support is planned
+            pkeyFormat = "raw", -- Currently must be 'raw' or 'kristwallet'
             -- You can get your raw pkey from kristweb or using https://pkey.its-em.ma/
             value = 1.0 -- Default scaling on item prices, can be overridden on a per-item basis
         },
@@ -129,6 +129,7 @@ return {
     },
     hooks = {
         start = nil, -- function(version, config, products)
+        prePurchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency) returns continueTransaction, error, errorMessage
         purchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency)
         failedPurchase = nil, -- function(transaction, transactionCurrency, product, errorMessage)
         programError = nil, -- function(err)

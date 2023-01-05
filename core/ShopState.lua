@@ -106,40 +106,53 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
             if purchasedProduct.quantity and purchasedProduct.quantity > 0 then
                 local productSources, available = ScanInventory.findProductItems(state.products, purchasedProduct, amountPurchased)
                 local refundAmount = math.floor(transaction.value - (available * productPrice))
-                print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.id .. " (refund " .. refundAmount .. ")")
                 if available > 0 then
-                    for _, productSource in ipairs(productSources) do
-                        if state.config.peripherals.outputChest == "self" then
-                            if not turtle then
-                                error("Self output but not a turtle!")
-                            end
-                            if not state.modem.getNameLocal() then
-                                error("Modem is not connected! Try right clicking it")
-                            end
-                            peripheral.call(productSource.inventory, "pushItems", state.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
-                            if state.config.settings.dropDirection == "forward" then
-                                turtle.drop(productSource.amount)
-                            elseif state.config.settings.dropDirection == "up" then
-                                turtle.dropUp(productSource.amount)
-                            elseif state.config.settings.dropDirection == "down" then
-                                turtle.dropDown(productSource.amount)
+                    local allowPurchase = true
+                    local err
+                    local errMessage
+                    if state.config.hooks and state.config.hooks.prePurchase then
+                        allowPurchase, err, errMessage = eventHook.execute(state.config.hooks.prePurchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+                    end
+                    if allowPurchase ~= false then
+                        print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.id .. " (refund " .. refundAmount .. ")")
+                        for _, productSource in ipairs(productSources) do
+                            if state.config.peripherals.outputChest == "self" then
+                                if not turtle then
+                                    error("Self output but not a turtle!")
+                                end
+                                if not state.modem.getNameLocal() then
+                                    error("Modem is not connected! Try right clicking it")
+                                end
+                                peripheral.call(productSource.inventory, "pushItems", state.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
+                                if state.config.settings.dropDirection == "forward" then
+                                    turtle.drop(productSource.amount)
+                                elseif state.config.settings.dropDirection == "up" then
+                                    turtle.dropUp(productSource.amount)
+                                elseif state.config.settings.dropDirection == "down" then
+                                    turtle.dropDown(productSource.amount)
+                                else
+                                    error("Invalid drop direction: " .. state.config.settings.dropDirection)
+                                end
                             else
-                                error("Invalid drop direction: " .. state.config.settings.dropDirection)
+                                peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
+                                --peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
                             end
-                        else
-                            peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
-                            --peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
                         end
-                    end
-                    purchasedProduct.quantity = purchasedProduct.quantity - available
-                    if refundAmount > 0 then
-                        refund(transactionCurrency, transaction.from, meta, refundAmount, state.config.lang.refundRemaining)
-                    end
-                    if state.config.settings.playSounds then
-                        sound.playSound(state.speaker, state.config.sounds.purchase)
-                    end
-                    if state.config.hooks and state.config.hooks.purchase then
-                        eventHook.execute(state.config.hooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+                        purchasedProduct.quantity = purchasedProduct.quantity - available
+                        if refundAmount > 0 then
+                            refund(transactionCurrency, transaction.from, meta, refundAmount, state.config.lang.refundRemaining)
+                        end
+                        if state.config.settings.playSounds then
+                            sound.playSound(state.speaker, state.config.sounds.purchase)
+                        end
+                        if state.config.hooks and state.config.hooks.purchase then
+                            eventHook.execute(state.config.hooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+                        end
+                    else
+                        refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or state.config.lang.refundDenied, err)
+                        if state.config.hooks and state.config.hooks.failedPurchase then
+                            eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or state.config.lang.refundDenied, err)
+                        end
                     end
                 else
                     refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
@@ -190,6 +203,24 @@ local function runShop(state)
         local kryptonWs = currency.krypton:connect()
         kryptonWs:subscribe("ownTransactions")
         kryptonWs:getSelf()
+        local pkey = currency.pkey
+        if currency.pkeyFormat == "kristwallet" then
+            pkey = currency.krypton:toKristWalletFormat(currency.pkey)
+        end
+        currency.host = currency.krypton:makev2address(pkey)
+        if currency.name then
+            local name = currency.name
+            if name:find("%.") then
+                name = name:sub(1, name:find("%.") - 1)
+            end
+            local nameInfo = currency.krypton:getName(name)
+            if not nameInfo then
+                error("Name " .. currency.name .. " does not exist!")
+            end
+            if nameInfo.name.owner:lower() ~= currency.host:lower() then
+                error("Name " .. currency.name .. " is not owned by " .. currency.host .. "!")
+            end
+        end
         table.insert(kryptonListeners, function() kryptonWs:listen() end)
     end
     parallel.waitForAny(function()
