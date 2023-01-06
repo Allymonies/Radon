@@ -28,7 +28,10 @@ return {
             headerAlign = "center",
             footerAlign = "center",
             productNameAlign = "center",
-            layout = "auto"
+            layout = "auto", -- "auto" automatically picks from "small", "medium", or "large"
+            -- based on the size of the screen
+            -- "custom" allows you to specify a custom layout file
+            --layoutFile = "CardLayout.lua"
         },
         colors = {
             bgColor = colors.lightGray,
@@ -80,6 +83,56 @@ return {
             [colors.pink] = 0xFF77A9,
             [colors.lightBlue] = 0x3D7EDB,
             [colors.white] = 0xECECEC
+        },
+        layouts = {
+            ["CardLayout.lua"] = {
+                -- Special theming for the card layout
+                -- Takes precedence over the above settings
+                settings = {
+                    showCredits = true
+                },
+                colors = {
+                    creditsColor = colors.lightGray,
+                    bgColor = colors.gray,
+                    headerColor = colors.lime,
+                    headerSuffixColor = colors.lightGray,
+                    subheaderBgColor = colors.white,
+                    subheaderColor = colors.black,
+                    footerBgColor = colors.black,
+                    footerColor = colors.white,
+                    dividerColor = colors.black,
+                    productNameColor = colors.lime,
+                    fieldLabelColor = colors.gray,
+                    normalQtyColor = colors.black,
+                    addressColor = colors.black,
+                    priceBgColor = colors.lime,
+                    priceColor = colors.white,
+                    productBgColors = {
+                        colors.lightGray
+                    },
+                    productBgShadowColors = {
+                        colors.black
+                    },
+                },
+                palette = {
+                    [colors.black] = 0x111111,
+                    [colors.blue] = 0x3366cc,
+                    [colors.purple] = 0xb266e5,
+                    [colors.green] = 0x57a64e,
+                    [colors.brown] = 0x7f664c,
+                    [colors.gray] = 0x4c4c4c,
+                    [colors.lightGray] = 0x999999,
+                    [colors.red] = 0xcc4c4c,
+                    [colors.orange] = 0xf2b233,
+                    [colors.yellow] = 0xdede6c,
+                    [colors.lime] = 0x7fcc19,
+                    [colors.cyan] = 0x4c99b2,
+                    [colors.magenta] = 0xe57fd8,
+                    [colors.pink] = 0xf2b2cc,
+                    [colors.lightBlue] = 0x99b2f2,
+                    [colors.white] = 0xf0f0f0
+                }
+            }
         }
     },
     sounds = {

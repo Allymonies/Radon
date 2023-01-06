@@ -29,7 +29,8 @@ local configSchema = {
             headerAlign = "enum<'left' | 'center' | 'right'>: alignment",
             footerAlign = "enum<'left' | 'center' | 'right'>: alignment",
             productNameAlign = "enum<'left' | 'center' | 'right'>: alignment",
-            layout = "enum<'small' | 'medium' | 'large' | 'auto'>: layout",
+            layout = "enum<'small' | 'medium' | 'large' | 'auto' | 'custom'>: layout",
+            layoutFile = "file?"
         },
         colors = {
             bgColor = "color",
@@ -173,6 +174,14 @@ local function typeCheck(entryType, typeName, value, path)
         end
         if entryType == "function" and type(value) ~= "function" then
             error("Config value " .. subpath .. " must be a function")
+        end
+        if entryType == "file" then
+            if type(value) ~= "string" then
+                error("Config value " .. subpath .. " must be a file")
+            end
+            if not fs.exists(value) or fs.isDir(value) then
+                error("Config value " .. subpath .. " must refer to a file")
+            end
         end
         if entryType == "color" then
             if type(value) ~= "number" then
