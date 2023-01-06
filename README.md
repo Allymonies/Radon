@@ -40,3 +40,10 @@ Radon is designed to be highly configurable. Look through `config.lua` for what 
 - `currencies` lists the currencies accepted by the shop. If you don't have a name on a given currency, you can leave it out or set it to nil to use nameless mode.
 - `peripherals` defines peripherals to be used for the shop. Most of these can be left at nil to be automatically set. `peripherals.outputChest` should generally be left on `"self"` as setting it to a chest will cause items to be inserted into the chest without dropping them, as chest dropping is not yet implemented in plethora 1.19
 - `hooks` define event hook functions to be executed when their respective event happens. Use this when you need additional functional (such as posting to webhooks) when the shop starts, a purchase happens or fails, an error occurs, and other events.
+
+# Layouts
+
+Radon has support for custom layouts in lua. While shops like Xenon are easier to configure, Radon offers a lot of flexibility, you get to write the code that renders the layout.
+
+
+An example layout is shipped with radon, `CardLayout.lua`. You can enable it by setting `config.theme.formatting.layout` to `"custom"` and `config.theme.formatting.layoutFile` to `"CardLayout.lua"`. If you'd like to know more about defining custom layouts, look at `CardLayout.lua`. Many useful components you may want to use are in the `components` folder of the source code.

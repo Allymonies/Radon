@@ -44,8 +44,8 @@ local function render(canvas, display, props, theme, version)
     local headerWidth
     local headerText = currency.host
     if currency.name then
-        headerText = currency.name
-        headerWidth = bigFont:getWidth(currency.name)
+        headerText = currency.name:gsub(headerSuffix .. "$", "")
+        headerWidth = bigFont:getWidth(headerText)
     else
         headerWidth = bigFont:getWidth(currency.host)
     end
@@ -71,7 +71,7 @@ local function render(canvas, display, props, theme, version)
         local suffix = BasicText {
             display = display,
             text = headerSuffix,
-            x = (headerStartX + headerWidth + headerPadding)/2,
+            x = math.floor((headerStartX + headerWidth + headerPadding)/2),
             y = 6,
             align = "left",
             bg = renderHelpers.getThemeSetting(theme, "colors.bgColor", layoutName),
