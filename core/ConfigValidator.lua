@@ -28,6 +28,7 @@ local configSchema = {
         formatting = {
             headerAlign = "enum<'left' | 'center' | 'right'>: alignment",
             footerAlign = "enum<'left' | 'center' | 'right'>: alignment",
+            footerSize = "enum<'small' | 'medium' | 'large' | 'auto'>: size",
             productNameAlign = "enum<'left' | 'center' | 'right'>: alignment",
             layout = "enum<'small' | 'medium' | 'large' | 'auto' | 'custom'>: layout",
             layoutFile = "file?"

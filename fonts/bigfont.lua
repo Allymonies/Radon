@@ -6,6 +6,6 @@ local cFont = require("res.cfont")
 local bigFontData = base64.decode(cFont)
 
 local bigFontSheet = loadRIF(bigFontData)
-local bigFont = createFont(bigFontSheet, " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-,.\164!:\6@")
+local bigFont = createFont(bigFontSheet, " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-,.\164!:\6@'<>")
 
 return bigFont

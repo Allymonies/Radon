@@ -27,6 +27,7 @@ return {
         formatting = {
             headerAlign = "center",
             footerAlign = "center",
+            footerSize = "auto",
             productNameAlign = "center",
             layout = "auto", -- "auto" automatically picks from "small", "medium", or "large"
             -- based on the size of the screen

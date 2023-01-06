@@ -1,7 +1,7 @@
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
-local version = "1.2.0"
+local version = "1.2.1"
 
 --- Imports
 local _ = require("util.score")

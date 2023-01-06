@@ -90,15 +90,26 @@ local function render(canvas, display, props, theme, version)
 
         if props.shopState.selectedCurrency then
             local footer
-            if smolFont:getWidth(footerMessage) < display.bgCanvas.width then
+            local footerSize = theme.formatting.footerSize
+            if footerSize == "auto" and bigFont:getWidth(footerMessage) < display.bgCanvas.width then
+                footerSize = "large"
+            elseif footerSize == "auto" and smolFont:getWidth(footerMessage) < display.bgCanvas.width then
+                footerSize = "medium"
+            elseif footerSize == "auto" then
+                footerSize = "small"
+            end
+            if footerSize == "large" then
+                footer = BigText { display=display, text=footerMessage, x=1, y=display.bgCanvas.height-bigFont.height-6, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
+                footerHeight = smolFont.height + 6
+            elseif footerSize == "medium" then
                 footer = SmolText { display=display, text=footerMessage, x=1, y=display.bgCanvas.height-smolFont.height-4, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
+                footerHeight = smolFont.height + 4
             else
                 footer = BasicText { display=display, text=footerMessage, x=1, y=math.floor(display.bgCanvas.height/3), align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=math.ceil(display.bgCanvas.width/2) }
+                footerHeight = smolFont.height + 4
             end
-            
             table.insert(elements, footer)
         end
-        footerHeight = smolFont.height + 4
     end
 
     local maxAddrWidth = 0
