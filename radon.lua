@@ -1,7 +1,7 @@
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 
-local version = "1.2.1"
+local version = "1.2.2"
 
 --- Imports
 local _ = require("util.score")
@@ -193,7 +193,8 @@ local success, err = pcall(function() ShopRunner.launchShop(shopState, function(
         eventHook.execute(config.hooks.start, version, config, products)
     end
     while true do
-        tree = Solyd.render(tree, Main {t = t, config = config, shopState = shopState, speaker = speaker})
+        -- add t = t if we need animations
+        tree = Solyd.render(tree, Main { config = config, shopState = shopState, speaker = speaker})
 
         local context = Solyd.getTopologicalContext(tree, { "canvas", "aabb" })
 
