@@ -4,6 +4,11 @@ A next-generation highly-configurable Krist shop with categories, nameless shops
 
 For any support needs or feature requests, contact Allymonies. Radon is in active development!
 
+![Demonstration of Radon in action](https://user-images.githubusercontent.com/7727003/211228781-40f30016-ed4c-4e9f-84b7-6b6108ef657d.png)
+![Radon's config editor](https://user-images.githubusercontent.com/7727003/211228836-8a7a9d10-b5a2-49a6-a8f3-63626c34c8bf.png)
+
+
+
 # Installation
 
 While you can install Radon with the Howlfile, or just copying all the files to the computer, it is recommended to use the installer, `pastebin run TPG238zDDP` (SCPaste https://p.sc3.io/TPG238zDDP). This will download the required files, `radon.lua`, `config.lua`, and `products.lua`.
