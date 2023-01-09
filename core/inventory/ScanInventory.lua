@@ -58,13 +58,13 @@ local partialObjectMatches
 local function partialArrayMatches(partialArray, array)
     for i = 1, #partialArray do
         local found = false
-        for i = 1, #array do
-            if type(array[i]) == "table" then
-                if partialObjectMatches(partialArray[i], array[i]) then
+        for j = 1, #array do
+            if type(array[j]) == "table" then
+                if partialObjectMatches(partialArray[i], array[j]) then
                     found = true
                     break
                 end
-            elseif partialArray[i] == array[i] then
+            elseif partialArray[i] == array[j] then
                 found = true
                 break
             end

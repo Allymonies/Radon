@@ -20,7 +20,7 @@ function print(...)
     end
 end
 
-local version = "1.3.0"
+local version = "1.3.1"
 
 --- Imports
 local _ = require("util.score")
