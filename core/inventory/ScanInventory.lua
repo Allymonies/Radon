@@ -43,6 +43,7 @@ end
 
 local function predicateMatches(predicates, item)
     local meta = peripheral.call(item.inventory, "getItemDetail", item.slot)
+    item.cachedMeta = meta
     return partialObjectMatches(predicates, meta)
 end
 
@@ -99,6 +100,9 @@ local function getInventoryItems(inventory, products)
             local matchingProducts = findMatchingProducts(products, item)
             for j = 1, #matchingProducts do
                 local product = matchingProducts[j]
+                if not product.newQty then
+                    product.newQty = 0
+                end
                 product.newQty = product.newQty + item.count
             end
         end
@@ -114,7 +118,7 @@ local function getAllInventoryItems(inventories, products)
         table.insert(inventoryThreads, function()
             local inventoryItems = getInventoryItems(inventory, products)
             for j = 1, #inventoryItems do
-                table.insert(items, inventoryItems[i])
+                table.insert(items, inventoryItems[j])
             end
         end)
     end
@@ -147,7 +151,7 @@ local function findProductItemsFrom(product, quantity, items, cached)
         local item = items[i]
         local inventory = item.inventory
         local slot = item.slot
-        if item.name == product.modid then
+        if item.name == product.modid and (not cached or not product.predicates or (item.cachedMeta and partialObjectMatches(product.predicates, item.cachedMeta))) then
             if cached or product.predicates then
                 item = peripheral.call(inventory, "getItemDetail", slot)
             end

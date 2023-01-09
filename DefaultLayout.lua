@@ -99,10 +99,10 @@ local function render(canvas, display, props, theme, version)
                 footerSize = "small"
             end
             if footerSize == "large" then
-                footer = BigText { display=display, text=footerMessage, x=1, y=display.bgCanvas.height-bigFont.height-6, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
+                footer = BigText { display=display, text=footerMessage, x=1, y=display.bgCanvas.height-bigFont.height-5, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
                 footerHeight = smolFont.height + 6
             elseif footerSize == "medium" then
-                footer = SmolText { display=display, text=footerMessage, x=1, y=display.bgCanvas.height-smolFont.height-4, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
+                footer = SmolText { display=display, text=footerMessage, x=1, y=display.bgCanvas.height-smolFont.height-2, align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=display.bgCanvas.width }
                 footerHeight = smolFont.height + 4
             else
                 footer = BasicText { display=display, text=footerMessage, x=1, y=math.floor(display.bgCanvas.height/3), align=theme.formatting.footerAlign, bg=theme.colors.footerBgColor, color = theme.colors.footerColor, width=math.ceil(display.bgCanvas.width/2) }

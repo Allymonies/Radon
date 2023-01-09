@@ -1,4 +1,4 @@
-local version = "1.3.3"
+local version = "1.3.5"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
 local oldPullEvent = os.pullEvent
@@ -203,6 +203,8 @@ local terminalState = {
     maxScroll = 0,
 }
 
+local mbsMode = false--fs.exists(".mbs")
+
 local Terminal = Solyd.wrapComponent("Terminal", function(props)
     local canvas = useCanvas(terminal)
     local theme = props.configState.config.terminalTheme
@@ -210,14 +212,18 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
     local flatCanvas = {}
     local versionString = "Radon " .. version
     local terminalCatagories = { "logs", "config", "products" }
-    local bodyHeight = math.floor(terminal.bgCanvas.height / 3) - 1
+    local msOffset = 0
+    if mbsMode and multishell.getCount() > 1 then
+        msOffset = 1
+    end
+    local bodyHeight = math.floor(terminal.bgCanvas.height / 3) - 1 - msOffset
     local bodyWidth = math.floor(terminal.bgCanvas.width / 2)
 
     table.insert(flatCanvas, Rect {
         key = "header",
         display = terminal,
         x = 1,
-        y = 1,
+        y = 1 + (msOffset*3),
         width = terminal.bgCanvas.width,
         height = 3,
         color = theme.colors.titleBgColor,
@@ -228,7 +234,7 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
         align = "left",
         text = versionString,
         x = 1,
-        y = 1,
+        y = 1 + msOffset,
         color = theme.colors.titleTextColor,
         bg = theme.colors.titleBgColor,
     })
@@ -245,7 +251,7 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
             align = "center",
             text = " "  .. terminalCatagories[i] .. " ",
             x = 2 + catagoriesX,
-            y = 1,
+            y = 1 + msOffset,
             color = theme.colors.catagoryTextColor,
             bg = bgColor,
             onClick = function()
@@ -266,7 +272,7 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
             key = "config-editor",
             display = terminal,
             x = 1,
-            y = 2,
+            y = 2 + msOffset,
             width = bodyWidth,
             height = bodyHeight,
             config = props.configState.config,
@@ -302,7 +308,7 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
             key = "products-editor",
             display = terminal,
             x = 1,
-            y = 2,
+            y = 2 + msOffset,
             width = bodyWidth,
             height = bodyHeight,
             config = props.shopState.products,
@@ -329,7 +335,7 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
             key = "logs",
             display = terminal,
             x = 1,
-            y = 2,
+            y = 2 + msOffset,
             width = bodyWidth,
             height = bodyHeight,
             logs = props.logs,
