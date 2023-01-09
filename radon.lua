@@ -272,8 +272,8 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
                 props.shopState.oldConfig = props.configState.config
                 props.shopState.config = newConfig
                 props.configState.config = newConfig
-                configErrors = ConfigValidator.validateConfig(newConfig)
-                if (not configErrors or #configErrors == 0) and (not productsErrors or #productsErrors == 0) then
+                props.terminalState.configErrors = ConfigValidator.validateConfig(newConfig)
+                if (not props.terminalState.configErrors or #props.terminalState.configErrors == 0) and (not props.terminalState.productsErrors or #props.terminalState.productsErrors == 0) then
                     newConfig.ready = true
                 end
                 configHelpers.getPeripherals(newConfig, peripherals)
@@ -307,8 +307,8 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
             onSave = function(newConfig)
                 props.shopState.products = newConfig
                 props.configState.products = newConfig
-                productsErrors = ConfigValidator.validateProducts(products)
-                if (not configErrors or #configErrors == 0) and (not productsErrors or #productsErrors == 0) then
+                props.terminalState.productsErrors = ConfigValidator.validateProducts(products)
+                if (not props.terminalState.configErrors or #props.terminalState.configErrors == 0) and (not props.terminalState.productsErrors or #props.terminalState.productsErrors == 0) then
                     props.configState.config.ready = true
                 end
                 local f = fs.open("products.lua", "w")
