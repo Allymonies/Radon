@@ -1,4 +1,4 @@
-local version = "1.3.6"
+local version = "1.3.7"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
 local oldPullEvent = os.pullEvent
@@ -292,6 +292,9 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
                 f.write("return " .. textutils.serialize(newConfig))
                 f.close()
                 print("Configs updated!")
+                if props.configState.eventHooks and props.configState.eventHooks.configSaved then
+                    props.configState.eventHooks.configSaved(newConfig)
+                end
             end
         })
     elseif (props.terminalState.productsErrors and #props.terminalState.productsErrors > 0) or terminalState.activeCatagory == "products" then
@@ -324,6 +327,9 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
                 f.write("return " .. textutils.serialize(newConfig))
                 f.close()
                 print("Products updated!")
+                if props.configState.eventHooks and props.configState.eventHooks.productsSaved then
+                    props.configState.eventHooks.productsSaved(newConfig)
+                end
             end
         })
     elseif terminalState.activeCatagory == "logs" then

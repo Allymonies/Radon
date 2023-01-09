@@ -236,6 +236,8 @@ local hooksSchema = {
     failedPurchase = "function?",
     programError = "function?",
     blink = "function?",
+    configSaved = "function?",
+    productsSaved = "function?",
 }
 
 local soundSchema = {
