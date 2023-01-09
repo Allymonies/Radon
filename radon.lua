@@ -1,3 +1,4 @@
+local version = "1.3.2"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
 local oldPullEvent = os.pullEvent
@@ -20,7 +21,6 @@ function print(...)
     end
 end
 
-local version = "1.3.1"
 
 --- Imports
 local _ = require("util.score")

@@ -1,59 +1,5 @@
 local itemCache = {}
 
-local function getInventories()
-    peripherals = peripheral.getNames()
-    inventories = {}
-    for i = 1, #peripherals do
-        name = peripherals[i]
-        local methods = peripheral.getMethods(name)
-        local hasListItems = false
-        local hasPushItems = false
-        if methods then
-            for i = 1, #methods do
-                if methods[i] == "list" then
-                    hasListItems = true
-                end
-                if methods[i] == "pushItems" then
-                    hasPushItems = true
-                end
-                if hasListItems and hasPushItems then
-                    break
-                end
-            end
-        end
-        if hasListItems and hasPushItems then
-            table.insert(inventories, peripheral.wrap(name))
-        end
-    end
-    return inventories
-end
-
-local function getInventoryItems(inventory)
-    local inventoryName = peripheral.getName(inventory)
-    local items = {}
-    local slots = inventory.list()
-    for slot, item in pairs(slots) do
-        if item then
-            item.inventory = inventoryName
-            item.slot = slot
-            table.insert(items, item)
-        end
-    end
-    return items
-end
-
-local function getAllInventoryItems(inventories)
-    local items = {}
-    for i = 1, #inventories do
-        local inventory = inventories[i]
-        local inventoryItems = getInventoryItems(inventory)
-        for i = 1, #inventoryItems do
-            table.insert(items, inventoryItems[i])
-        end
-    end
-    return items
-end
-
 local partialObjectMatches
 local function partialArrayMatches(partialArray, array)
     for i = 1, #partialArray do
@@ -113,21 +59,76 @@ local function findMatchingProducts(products, item)
     return matchingProducts
 end
 
+local function getInventories()
+    peripherals = peripheral.getNames()
+    inventories = {}
+    for i = 1, #peripherals do
+        name = peripherals[i]
+        local methods = peripheral.getMethods(name)
+        local hasListItems = false
+        local hasPushItems = false
+        if methods then
+            for j = 1, #methods do
+                if methods[j] == "list" then
+                    hasListItems = true
+                end
+                if methods[j] == "pushItems" then
+                    hasPushItems = true
+                end
+                if hasListItems and hasPushItems then
+                    break
+                end
+            end
+        end
+        if hasListItems and hasPushItems then
+            table.insert(inventories, peripheral.wrap(name))
+        end
+    end
+    return inventories
+end
+
+local function getInventoryItems(inventory, products)
+    local inventoryName = peripheral.getName(inventory)
+    local items = {}
+    local slots = inventory.list()
+    for slot, item in pairs(slots) do
+        if item then
+            item.inventory = inventoryName
+            item.slot = slot
+            table.insert(items, item)
+            local matchingProducts = findMatchingProducts(products, item)
+            for j = 1, #matchingProducts do
+                local product = matchingProducts[j]
+                product.newQty = product.newQty + item.count
+            end
+        end
+    end
+    return items
+end
+
+local function getAllInventoryItems(inventories, products)
+    local items = {}
+    local inventoryThreads = {}
+    for i = 1, #inventories do
+        local inventory = inventories[i]
+        table.insert(inventoryThreads, function()
+            local inventoryItems = getInventoryItems(inventory, products)
+            for j = 1, #inventoryItems do
+                table.insert(items, inventoryItems[i])
+            end
+        end)
+    end
+    parallel.waitForAll(unpack(inventoryThreads))
+    return items
+end
+
 local function updateProductInventory(products)
     for i = 1, #products do
         products[i].newQty = 0
     end
     local inventories = getInventories()
-    local items = getAllInventoryItems(inventories)
+    local items = getAllInventoryItems(inventories, products)
     itemCache = items
-    for i = 1, #items do
-        local item = items[i]
-        local matchingProducts = findMatchingProducts(products, item)
-        for j = 1, #matchingProducts do
-            local product = matchingProducts[j]
-            product.newQty = product.newQty + item.count
-        end
-    end
     for i = 1, #products do
         local product = products[i]
         product.quantity = product.newQty
