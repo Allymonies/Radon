@@ -1,4 +1,4 @@
-local version = "1.3.2"
+local version = "1.3.3"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
 local oldPullEvent = os.pullEvent
@@ -70,6 +70,8 @@ local productsErrors = ConfigValidator.validateProducts(products)
 
 if (configErrors and #configErrors > 0) or (productsErrors and #productsErrors > 0) then
     config.ready = false
+else
+    config.ready = true
 end
 
 local peripherals = {}
