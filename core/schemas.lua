@@ -1,7 +1,8 @@
 
 local configSchema = {
     branding = {
-        title = "string"
+        title = "string",
+        subtitle = "string?",
     },
     settings = {
         hideUnavailableProducts = "boolean",
@@ -26,6 +27,7 @@ local configSchema = {
     theme = {
         formatting = {
             headerAlign = "enum<'left' | 'center' | 'right'>: alignment",
+            subtitleAlign = "enum<'left' | 'center' | 'right'>: alignment",
             footerAlign = "enum<'left' | 'center' | 'right'>: alignment",
             footerSize = "enum<'small' | 'medium' | 'large' | 'auto'>: size",
             productNameAlign = "enum<'left' | 'center' | 'right'>: alignment",
@@ -36,6 +38,8 @@ local configSchema = {
             bgColor = "color",
             headerBgColor = "color",
             headerColor = "color",
+            subtitleBgColor = "color",
+            subtitleColor = "color",
             footerBgColor = "color",
             footerColor = "color",
             productBgColors = {

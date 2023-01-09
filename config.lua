@@ -1,6 +1,7 @@
 return {
     branding = {
-        title = nil
+        title = nil,
+        subtitle = nil,
     },
     settings = {
         hideUnavailableProducts = false,
@@ -26,6 +27,7 @@ return {
     theme = {
         formatting = {
             headerAlign = "center",
+            subtitleAlign = "center",
             footerAlign = "center",
             footerSize = "auto",
             productNameAlign = "center",
@@ -38,6 +40,8 @@ return {
             bgColor = colors.lightGray,
             headerBgColor = colors.red,
             headerColor = colors.white,
+            subtitleBgColor = colors.red,
+            subtitleColor = colors.white,
             footerBgColor = colors.red,
             footerColor = colors.white,
             productBgColors = {

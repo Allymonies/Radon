@@ -58,6 +58,7 @@ local function render(canvas, display, props, theme, version)
     local headerCx = math.floor((display.bgCanvas.width - bigFont:getWidth(props.configState.config.branding.title)) / 2)
     local header
     -- TODO: Change header font size based on width
+    local headerHeight = 15
     if theme.formatting.headerAlign == "center" and headerCx < currencyEndX and #categories == 1 then
         table.insert(elements, Rect { display=display, x=1, y=1, width=currencyEndX, height=bigFont.height+6, color=theme.colors.headerBgColor })
         header = BigText { display=display, text=props.configState.config.branding.title, x=currencyEndX, y=1, align="left", bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
@@ -66,6 +67,19 @@ local function render(canvas, display, props, theme, version)
         header = BigText { display=display, text=props.configState.config.branding.title, x=1, y=1, align="right", bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=categoryX-1 }
     else
         header = BigText { display=display, text=props.configState.config.branding.title, x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
+    end
+    if props.configState.config.branding.subtitle then
+        table.insert(elements, BasicText {
+            display = display,
+            text = props.configState.config.branding.subtitle,
+            x = 1,
+            y = 6,
+            align = theme.formatting.subtitleAlign,
+            bg = theme.colors.subtitleBgColor,
+            color = theme.colors.subtitleColor,
+            width = math.floor(display.bgCanvas.width / 2)
+        })
+        headerHeight = headerHeight + 3
     end
 
     table.insert(elements, header)
@@ -119,7 +133,7 @@ local function render(canvas, display, props, theme, version)
     props.shopState.numCategories = #categories
     local catName = categories[selectedCategory].name
     local shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.configState.config.settings)
-    local productsHeight = display.bgCanvas.height - 17 - footerHeight
+    local productsHeight = display.bgCanvas.height - headerHeight - footerHeight - 2
     local heightPerProduct = math.floor(productsHeight / #shopProducts)
     local layout
     if theme.formatting.layout == "auto" then
@@ -190,6 +204,8 @@ local function render(canvas, display, props, theme, version)
             break
         end
     end
+    local startY = headerHeight + 1
+    local startTextY = math.ceil(headerHeight / 3) + 1
     for i = 1, #shopProducts do
         local product = shopProducts[i]
         -- Display products in format:
@@ -231,7 +247,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=tostring(product.quantity),
                 x=1,
-                y=16+((i-1)*15),
+                y=startY+((i-1)*15),
                 align="center",
                 bg=productBgColor,
                 color=qtyColor,
@@ -242,7 +258,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=product.name,
                 x=maxQtyWidth+1,
-                y=16+((i-1)*15),
+                y=startY+((i-1)*15),
                 align=theme.formatting.productNameAlign,
                 bg=productBgColor,
                 color=productNameColor,
@@ -253,7 +269,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=tostring(productPrice) .. currencySymbol,
                 x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth,
-                y=16+((i-1)*15),
+                y=startY+((i-1)*15),
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.priceColor,
@@ -264,7 +280,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=productAddr,
                 x=display.bgCanvas.width-3-maxAddrWidth,
-                y=16+((i-1)*15),
+                y=startY+((i-1)*15),
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.addressColor,
@@ -275,7 +291,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=kristpayHelperText,
                 x=1,
-                y=1+(i*5),
+                y=startTextY+((i-1)*5),
                 align="center",
                 bg=productBgColor,
                 color=productBgColor,
@@ -287,7 +303,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=tostring(product.quantity),
                 x=1,
-                y=16+((i-1)*9),
+                y=startY+((i-1)*9),
                 align="center",
                 bg=productBgColor,
                 color=qtyColor,
@@ -298,7 +314,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=product.name,
                 x=maxQtyWidth+1,
-                y=16+((i-1)*9),
+                y=startY+((i-1)*9),
                 align=theme.formatting.productNameAlign,
                 bg=productBgColor,
                 color=productNameColor,
@@ -309,7 +325,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=tostring(productPrice) .. currencySymbol,
                 x=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth,
-                y=16+((i-1)*9),
+                y=startY+((i-1)*9),
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.priceColor,
@@ -320,7 +336,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=productAddr,
                 x=display.bgCanvas.width-3-maxAddrWidth,
-                y=16+((i-1)*9),
+                y=startY+((i-1)*9),
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.addressColor,
@@ -331,7 +347,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=kristpayHelperText,
                 x=1,
-                y=3+(i*3),
+                y=startTextY+((i-1)*3),
                 align="center",
                 bg=productBgColor,
                 color=productBgColor,
@@ -343,7 +359,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=tostring(product.quantity),
                 x=1,
-                y=6+((i-1)*1),
+                y=startTextY+((i-1)*1),
                 align="center",
                 bg=productBgColor,
                 color=qtyColor,
@@ -354,7 +370,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=product.name,
                 x=maxQtyWidth+1,
-                y=6+((i-1)*1),
+                y=startTextY+((i-1)*1),
                 align=theme.formatting.productNameAlign,
                 bg=productBgColor,
                 color=productNameColor,
@@ -365,7 +381,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=tostring(productPrice) .. currencySymbol,
                 x=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth,
-                y=6+((i-1)*1),
+                y=startTextY+((i-1)*1),
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.priceColor,
@@ -376,7 +392,7 @@ local function render(canvas, display, props, theme, version)
                 display=display,
                 text=productAddr,
                 x=(display.bgCanvas.width/2)-1-maxAddrWidth,
-                y=6+((i-1)*1),
+                y=startTextY+((i-1)*1),
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.addressColor,
