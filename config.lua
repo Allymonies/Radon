@@ -256,14 +256,6 @@ return {
         -- NOTE: Chest dropping is NYI in plethora 1.19, so do not use unless
         -- the output chest can be accessed
     },
-    hooks = {
-        start = nil, -- function(version, config, products)
-        prePurchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency) returns continueTransaction, error, errorMessage
-        purchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency)
-        failedPurchase = nil, -- function(transaction, transactionCurrency, product, errorMessage)
-        programError = nil, -- function(err)
-        blink = nil, -- function(blinkState) called every 3 seconds while shop is running
-    },
     exchange = {
         -- Not yet implemented
         enabled = true,

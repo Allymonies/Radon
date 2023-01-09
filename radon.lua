@@ -58,6 +58,10 @@ local loadRIF = require("modules.rif")
 local configDefaults = require("configDefaults")
 local config = require("config")
 local products = require("products")
+local eventHooks = {}
+if fs.exists(fs.combine(fs.getDir(shell.getRunningProgram()), "eventHooks.lua")) then
+    eventHooks = require("eventHooks")
+end
 --- End Imports
 
 configHelpers.loadDefaults(config, configDefaults)
@@ -85,6 +89,7 @@ local layoutRenderer = nil
 local configState = {
     config = config,
     products = products,
+    eventHooks = eventHooks,
 }
 
 local Main = Solyd.wrapComponent("Main", function(props)
@@ -407,7 +412,7 @@ local function diffCanvasStack(diffDisplay, newStack, lastCanvas)
     lastCanvas.hash = newCanvasHash
 end
 
-local shopState = Core.ShopState.new(config, products, peripherals, version, logs)
+local shopState = Core.ShopState.new(config, products, peripherals, version, logs, eventHooks)
 
 local Profiler = require("profile")
 
@@ -416,8 +421,8 @@ local deltaTimer = os.startTimer(0)
 local success, err = pcall(function() ShopRunner.launchShop(shopState, function()
     -- Profiler:activate()
     print("Radon " .. version .. " started")
-    if config.hooks and config.hooks.start then
-        eventHook.execute(config.hooks.start, version, config, products)
+    if eventHooks and eventHooks.start then
+        eventHook.execute(eventHooks.start, version, config, products)
     end
     while true do
         -- add t = t if we need animations
@@ -549,8 +554,8 @@ end
 
 os.pullEvent = oldPullEvent
 if not success then
-    if config.hooks and config.hooks.programError then
-        eventHook.execute(config.hooks.programError, err)
+    if eventHooks and eventHooks.programError then
+        eventHook.execute(eventHooks.programError, err)
     end
     error(err)
 end

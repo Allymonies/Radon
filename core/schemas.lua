@@ -184,30 +184,22 @@ local configSchema = {
         exchangeChest = "chest?",
         outputChest = "chest",
     },
-    hooks = {
-        start = "function?",
-        prePurchase = "function?",
-        purchase = "function?",
-        failedPurchase = "function?",
-        programError = "function?",
-        blink = "function?",
-    },
-    shopSync = {
-        enabled = "boolean?",
-        name = "string?",
-        description = "string?",
-        owner = "string?",
-        location = {
-            coordinates = {
-                __type = "array?",
-                __min = 3,
-                __max = 3,
-                __entry = "number"
-            },
-            description = "string?",
-            dimension = "enum<'overworld' | 'nether' | 'end'>?: dimension"
-        }
-    },
+    -- shopSync = {
+    --     enabled = "boolean?",
+    --     name = "string?",
+    --     description = "string?",
+    --     owner = "string?",
+    --     location = {
+    --         coordinates = {
+    --             __type = "array?",
+    --             __min = 3,
+    --             __max = 3,
+    --             __entry = "number"
+    --         },
+    --         description = "string?",
+    --         dimension = "enum<'overworld' | 'nether' | 'end'>?: dimension"
+    --     }
+    -- },
     exchange = {
         enabled = "boolean",
         node = "string"
@@ -233,6 +225,15 @@ local productsSchema = {
     }
 }
 
+local hooksSchema = {
+    start = "function?",
+    prePurchase = "function?",
+    purchase = "function?",
+    failedPurchase = "function?",
+    programError = "function?",
+    blink = "function?",
+}
+
 local soundSchema = {
     name = "string",
     volume = "number",
@@ -242,5 +243,6 @@ local soundSchema = {
 return {
     configSchema = configSchema,
     productsSchema = productsSchema,
+    hooksSchema = hooksSchema,
     soundSchema = soundSchema
 }

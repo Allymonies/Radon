@@ -13,7 +13,7 @@ local shopSyncChannel = 9773
 local ShopState = {}
 local ShopState_mt = { __index = ShopState }
 
-function ShopState.new(config, products, peripherals, version, logs)
+function ShopState.new(config, products, peripherals, version, logs, eventHooks)
     local self = setmetatable({}, ShopState_mt)
 
     self.running = false
@@ -30,6 +30,7 @@ function ShopState.new(config, products, peripherals, version, logs)
     self.numCategories = 1
     self.productsChanged = false
     self.logs = logs
+    self.eventHooks = eventHooks
     self.lastTouched = os.epoch("utc")
 
     return self
@@ -113,8 +114,8 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                     local allowPurchase = true
                     local err
                     local errMessage
-                    if state.config.hooks and state.config.hooks.prePurchase then
-                        allowPurchase, err, errMessage = eventHook.execute(state.config.hooks.prePurchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+                    if state.eventHooks and state.eventHooks.prePurchase then
+                        allowPurchase, err, errMessage = eventHook.execute(state.eventHooks.prePurchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
                     end
                     if allowPurchase ~= false then
                         print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.id .. " (refund " .. refundAmount .. ")")
@@ -148,37 +149,37 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                         if state.config.settings.playSounds then
                             sound.playSound(state.peripherals.speaker, state.config.sounds.purchase)
                         end
-                        if state.config.hooks and state.config.hooks.purchase then
-                            eventHook.execute(state.config.hooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+                        if state.eventHooks and state.eventHooks.purchase then
+                            eventHook.execute(state.eventHooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
                         end
                     else
                         refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or state.config.lang.refundDenied, err)
-                        if state.config.hooks and state.config.hooks.failedPurchase then
-                            eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or state.config.lang.refundDenied, err)
+                        if state.eventHooks and state.eventHooks.failedPurchase then
+                            eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or state.config.lang.refundDenied, err)
                         end
                     end
                 else
                     refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
-                    if state.config.hooks and state.config.hooks.failedPurchase then
-                        eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundOutOfStock)
+                    if state.eventHooks and state.eventHooks.failedPurchase then
+                        eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundOutOfStock)
                     end
                 end
             else
                 refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
-                if state.config.hooks and state.config.hooks.failedPurchase then
-                    eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundOutOfStock)
+                if state.eventHooks and state.eventHooks.failedPurchase then
+                    eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundOutOfStock)
                 end
             end
         else
             refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundAtLeastOne, true)
-            if state.config.hooks and state.config.hooks.failedPurchase then
-                eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundAtLeastOne)
+            if state.eventHooks and state.eventHooks.failedPurchase then
+                eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundAtLeastOne)
             end
         end
     else
         refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundInvalidProduct, true)
-        if state.config.hooks and state.config.hooks.failedPurchase then
-            eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundInvalidProduct)
+        if state.eventHooks and state.eventHooks.failedPurchase then
+            eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundInvalidProduct)
         end
     end
 end
@@ -269,15 +270,15 @@ local function runShop(state)
                                 -- Success :D
                             else
                                 refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundError, true)
-                                if state.config.hooks and state.config.hooks.failedPurchase then
-                                    eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundError)
+                                if state.eventHooks and state.eventHooks.failedPurchase then
+                                    eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundError)
                                 end
                                 error(err)
                             end
                         else
                             refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundNoProduct, true)
-                            if state.config.hooks and state.config.hooks.failedPurchase then
-                                eventHook.execute(state.config.hooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundNoProduct)
+                            if state.eventHooks and state.eventHooks.failedPurchase then
+                                eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundNoProduct)
                             end
                         end
                     end
@@ -310,8 +311,8 @@ local function runShop(state)
             if state.config.peripherals.blinker then
                 redstone.setOutput(state.config.peripherals.blinker, blinkState) 
             end
-            if state.config.hooks and state.config.hooks.blink then
-                eventHook.execute(state.config.hooks.blink, blinkState)
+            if state.eventHooks and state.eventHooks.blink then
+                eventHook.execute(state.eventHooks.blink, blinkState)
             end
             sleep(blinkFrequency)
         end

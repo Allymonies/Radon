@@ -12,7 +12,7 @@ While you can install Radon with the Howlfile, or just copying all the files to 
 
 Attach a wired modem to your turtle. Then add a chest on that wired network (it must be connected to a wired modem on that network). Make sure a monitor is next to the turtle.
 
-Open `config.lua` and change `branding.title` to the name of your shop you want shown in the header.
+Either use the ingame GUI editor on an advanced computer/turtle, or edit `config.lua` and change `branding.title` to the name of your shop you want shown in the header.
 
 Next change `currencies.name`, and `currencies.pkey` for the krist currency to your krist address, the krist name you will be using (or nil), and your krist address' private key, respectively. If you are using a kristwallet format password, change `currencies.pkeyFormat` to `"kristwallet"`. You can then either remove/comment out the tenebra currency, or fill in your respective details for that.
 
@@ -39,7 +39,8 @@ Radon is designed to be highly configurable. Look through `config.lua` for what 
 - `sounds` controls the sounds that get played in various situations
 - `currencies` lists the currencies accepted by the shop. If you don't have a name on a given currency, you can leave it out or set it to nil to use nameless mode.
 - `peripherals` defines peripherals to be used for the shop. Most of these can be left at nil to be automatically set. `peripherals.outputChest` should generally be left on `"self"` as setting it to a chest will cause items to be inserted into the chest without dropping them, as chest dropping is not yet implemented in plethora 1.19
-- `hooks` define event hook functions to be executed when their respective event happens. Use this when you need additional functional (such as posting to webhooks) when the shop starts, a purchase happens or fails, an error occurs, and other events.
+
+For custom logic, you can define functions in `eventHooks.lua`, hooks define event hook functions to be executed when their respective event happens. Use this when you need additional functional (such as posting to webhooks) when the shop starts, a purchase happens or fails, an error occurs, and other events.
 
 # Layouts
 

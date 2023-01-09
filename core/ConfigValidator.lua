@@ -235,10 +235,15 @@ local function validateProducts(products)
     return validate(products, schemas.productsSchema, "products")
 end
 
+local function validateHooks(hooks)
+    return validate(hooks, schemas.hooksSchema, "hooks")
+end
+
 return {
     typeCheck = typeCheck,
     validate = validate,
+    validationArrayToMap = validationArrayToMap,
     validateConfig = validateConfig,
     validateProducts = validateProducts,
-    validationArrayToMap = validationArrayToMap
+    validateHooks = validateHooks,
 }
