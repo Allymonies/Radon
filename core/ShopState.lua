@@ -13,20 +13,23 @@ local shopSyncChannel = 9773
 local ShopState = {}
 local ShopState_mt = { __index = ShopState }
 
-function ShopState.new(config, products, modem, shopSyncModem, speaker, version)
+function ShopState.new(config, products, peripherals, version, logs)
     local self = setmetatable({}, ShopState_mt)
 
     self.running = false
     self.config = config
+    self.peripherals = peripherals
     self.products = products
-    self.modem = modem
-    self.shopSyncModem = shopSyncModem
-    self.speaker = speaker
     self.version = version
-    self.selectedCurrency = config.currencies[1]
+    if config.currencies and config.currencies[1] then
+        self.selectedCurrency = config.currencies[1]
+    else
+        self.selectedCurrency = nil
+    end
     self.selectedCategory = 1
     self.numCategories = 1
     self.productsChanged = false
+    self.logs = logs
     self.lastTouched = os.epoch("utc")
 
     return self
@@ -120,10 +123,10 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                                 if not turtle then
                                     error("Self output but not a turtle!")
                                 end
-                                if not state.modem.getNameLocal() then
+                                if not state.peripherals.modem.getNameLocal() then
                                     error("Modem is not connected! Try right clicking it")
                                 end
-                                peripheral.call(productSource.inventory, "pushItems", state.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
+                                peripheral.call(productSource.inventory, "pushItems", state.peripherals.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
                                 if state.config.settings.dropDirection == "forward" then
                                     turtle.drop(productSource.amount)
                                 elseif state.config.settings.dropDirection == "up" then
@@ -143,7 +146,7 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                             refund(transactionCurrency, transaction.from, meta, refundAmount, state.config.lang.refundRemaining)
                         end
                         if state.config.settings.playSounds then
-                            sound.playSound(state.speaker, state.config.sounds.purchase)
+                            sound.playSound(state.peripherals.speaker, state.config.sounds.purchase)
                         end
                         if state.config.hooks and state.config.hooks.purchase then
                             eventHook.execute(state.config.hooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
@@ -180,14 +183,14 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
     end
 end
 
--- Anytime the shop state is resumed, animation should be finished instantly. (call animation finish hooks)
----@param state ShopState
-local function runShop(state)
-    -- Shop is starting
-    state.running = true
+local function setupKrypton(state)
+    state.selectedCurrency = state.config.currencies[1]
     state.currencies = {}
-    local kryptonListeners = {}
+    state.kryptonListeners = {}
     for _, currency in ipairs(state.config.currencies) do
+        if currency.name == "" then
+            currency.name = nil
+        end
         local node = currency.node
         if not node and currency.id == "krist" then
             node = "https://krist.dev/"
@@ -221,8 +224,21 @@ local function runShop(state)
                 error("Name " .. currency.name .. " is not owned by " .. currency.host .. "!")
             end
         end
-        table.insert(kryptonListeners, function() kryptonWs:listen() end)
+        table.insert(state.kryptonListeners, function() kryptonWs:listen() end)
+        state.kryptonReady = true
     end
+end
+
+-- Anytime the shop state is resumed, animation should be finished instantly. (call animation finish hooks)
+---@param state ShopState
+local function runShop(state)
+    -- Shop is starting
+    -- Wait for config ready
+    while not state.config.ready do sleep(0.5) end
+    state.running = true
+    state.currencies = {}
+    state.kryptonListeners = {}
+    setupKrypton(state)
     parallel.waitForAny(function()
         while true do
             local event, transactionEvent = os.pullEvent("transaction")
@@ -302,7 +318,7 @@ local function runShop(state)
     end, function()
         while state.running do
             sleep(shopSyncFrequency)
-            if state.config.shopSync and state.config.shopSync.enabled and state.shopSyncModem then
+            if state.config.shopSync and state.config.shopSync.enabled and state.peripherals.shopSyncModem then
                 local items = {}
                 for i = 1, #state.products do
                     local product = state.products[i]
@@ -343,7 +359,7 @@ local function runShop(state)
                         }
                     })
                 end
-                state.shopSyncModem.transmit(shopSyncChannel, os.getComputerID(), {
+                state.peripherals.shopSyncModem.transmit(shopSyncChannel, os.getComputerID(), {
                     type = "ShopSync",
                     info = {
                         name = state.config.shopSync.name,
@@ -361,7 +377,43 @@ local function runShop(state)
                 })
             end
         end
-    end, unpack(kryptonListeners))
+    end, function()
+        while state.running do
+            if state.changedCurrencies and state.oldConfig then
+                state.changedCurrencies = false
+                state.kryptonReady = false
+                for i = 1, #state.oldConfig.currencies do
+                    local currency = state.oldConfig.currencies[i]
+                    if (currency.krypton and currency.krypton.ws) then
+                        currency.krypton.ws:disconnect()
+                        currency.krypton = nil
+                    end
+                end
+                for i = 1, #state.currencies do
+                    local currency = state.currencies[i]
+                    if (currency.krypton and currency.krypton.ws) then
+                        currency.krypton.ws:disconnect()
+                        currency.krypton = nil
+                    end
+                end
+                setupKrypton(state)
+                state.kryptonReady = true
+                state.oldConfig = nil
+            end
+            sleep(0.5)
+        end
+    end, function()
+        while state.running do
+            if state.kryptonReady then
+                parallel.waitForAny(function()
+                    while state.kryptonReady do
+                        sleep(0.5)
+                    end
+                end, unpack(state.kryptonListeners))
+            end
+            sleep(0.5)
+        end
+    end)
 end
 
 return {

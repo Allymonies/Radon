@@ -33,7 +33,7 @@ local function render(canvas, display, props, theme, version)
 
     local categories = renderHelpers.getCategories(props.shopState.products)
     local selectedCategory = props.shopState.selectedCategory
-    local shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.config.settings)
+    local shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.configState.config.settings)
     local currency = props.shopState.selectedCurrency
 
     local headerSuffix = ""
@@ -42,12 +42,12 @@ local function render(canvas, display, props, theme, version)
     end
     local headerPadding = 2*6
     local headerWidth
-    local headerText = currency.host
+    local headerText = currency.host or ""
     if currency.name then
         headerText = currency.name:gsub(headerSuffix .. "$", "")
         headerWidth = bigFont:getWidth(headerText)
     else
-        headerWidth = bigFont:getWidth(currency.host)
+        headerWidth = bigFont:getWidth(headerText)
     end
     local headerStartX = 1
     local headerAlign = renderHelpers.getThemeSetting(theme, "formatting.headerAlign", layoutName)
@@ -80,7 +80,7 @@ local function render(canvas, display, props, theme, version)
         table.insert(elements, suffix)
     end
 
-    local subHeaderWidth = math.max( (display.bgCanvas.width / 2) / 2, #props.config.branding.title)
+    local subHeaderWidth = math.max( (display.bgCanvas.width / 2) / 2, #props.configState.config.branding.title)
     local subheaderStartX = 1
     if  headerAlign == "center" then
         subheaderStartX = math.floor(((display.bgCanvas.width / 2) - subHeaderWidth) / 2)
@@ -89,7 +89,7 @@ local function render(canvas, display, props, theme, version)
     end
     local subHeader = BasicText {
         display = display,
-        text = props.config.branding.title,
+        text = props.configState.config.branding.title,
         x = subheaderStartX,
         y = 6 + 2,
         align = headerAlign,
@@ -315,13 +315,13 @@ local function render(canvas, display, props, theme, version)
     end
 
     -- Currencies
-    if #props.config.currencies > 1 then
+    if #props.configState.config.currencies > 1 then
         local currencyBgColors = renderHelpers.getThemeSetting(theme, "colors.currencyBgColors", layoutName)
         local maxCurrencyLeftX = math.floor( ((subheaderStartX*2) - 3) / 2)
         local minCurrencyRightX = math.ceil( (((subheaderStartX+subHeaderWidth)*2) + 3) / 2)
         local currencyX = 2
-        for i = 1, #props.config.currencies do
-            local displayCurrency = props.config.currencies[i]
+        for i = 1, #props.configState.config.currencies do
+            local displayCurrency = props.configState.config.currencies[i]
             local displaySymbol = " " .. renderHelpers.getCurrencySymbol(displayCurrency, "small") .. " "
             local currencyBgColor = currencyBgColors[((i-1) % #currencyBgColors) + 1]
             if currencyX + #displaySymbol > maxCurrencyLeftX then
@@ -336,10 +336,10 @@ local function render(canvas, display, props, theme, version)
                 bg = currencyBgColor,
                 color = renderHelpers.getThemeSetting(theme, "colors.currencyTextColor", layoutName),
                 onClick = function()
-                    props.shopState.selectedCurrency = props.config.currencies[i]
+                    props.shopState.selectedCurrency = props.configState.config.currencies[i]
                     props.shopState.lastTouched = os.epoch("utc")
-                    if props.config.settings.playSounds then
-                        sound.playSound(props.speaker, props.config.sounds.button)
+                    if props.configState.config.settings.playSounds then
+                        sound.playSound(props.peripherals.speaker, props.configState.config.sounds.button)
                     end
                 end
             })
@@ -379,8 +379,8 @@ local function render(canvas, display, props, theme, version)
                 onClick = function()
                     props.shopState.selectedCategory = i
                     props.shopState.lastTouched = os.epoch("utc")
-                    if props.config.settings.playSounds then
-                        sound.playSound(props.speaker, props.config.sounds.button)
+                    if props.configState.config.settings.playSounds then
+                        sound.playSound(props.peripherals.speaker, props.configState.config.sounds.button)
                     end
                 end
             })
@@ -388,12 +388,12 @@ local function render(canvas, display, props, theme, version)
         end
     end
 
-    if props.config.settings.showFooter then
+    if props.configState.config.settings.showFooter then
         local footerMessage
-        if props.shopState.selectedCurrency.name or not props.config.lang.footerNoName then
-            footerMessage = props.config.lang.footer
+        if props.shopState.selectedCurrency.name or not props.configState.config.lang.footerNoName then
+            footerMessage = props.configState.config.lang.footer
         else
-            footerMessage = props.config.lang.footerNoName
+            footerMessage = props.configState.config.lang.footerNoName
         end
         if props.shopState.selectedCurrency.name and footerMessage:find("%%name%%") then
             footerMessage = footerMessage:gsub("%%name%%", props.shopState.selectedCurrency.name)

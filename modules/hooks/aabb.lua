@@ -24,9 +24,9 @@ SOFTWARE.
 
 local Solyd = require("modules.solyd")
 
-local function useBoundingBox(x, y, w, h, onClick)
+local function useBoundingBox(x, y, w, h, onClick, onScroll)
     local box = Solyd.useRef(function()
-        return { x = x, y = y, w = w, h = h, onClick = onClick }
+        return { x = x, y = y, w = w, h = h, onClick = onClick, onScroll = onScroll }
     end).value
 
     box.x = x
@@ -34,6 +34,7 @@ local function useBoundingBox(x, y, w, h, onClick)
     box.w = w
     box.h = h
     box.onClick = onClick
+    box.onScroll = onScroll
 
     return box
 end

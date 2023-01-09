@@ -8,7 +8,7 @@ Tasks:minify "minify" {
 }
 
 Tasks:require "main" {
-	include = {"components/*.lua", "core/*.lua", "fonts/*.lua", "Krypton/*.lua", "modules/*.lua", "res/*.lua", "util/*.lua", "DefaultLayout.lua", "radon.lua", "profile.lua"},
+	include = {"components/*.lua", "core/*.lua", "fonts/*.lua", "Krypton/*.lua", "modules/*.lua", "res/*.lua", "util/*.lua", "DefaultLayout.lua", "radon.lua", "profile.lua", "configDefaults.lua"},
 	startup = "radon.lua",
 	output = "build/radon.lua",
 }

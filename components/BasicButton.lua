@@ -19,6 +19,6 @@ return Solyd.wrapComponent("BasicButton", function(props)
         width = props.width,
     }, {
         -- canvas = canvas,
-        aabb = useBoundingBox((props.x*2)-1, (props.y*3)-2, (props.width or #props.text)*2, 3, props.onClick),
+        aabb = useBoundingBox((props.x*2)-1, (props.y*3)-2, (props.width or #props.text)*2, 3, props.onClick, props.onScroll),
     }
 end)

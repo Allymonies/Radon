@@ -19,6 +19,9 @@ return Solyd.wrapComponent("BasicText", function(props)
                 text = text .. string.rep(" ", props.width - #text)
             end
         end
+        if props.width and #text > props.width then
+            text = text:sub(1, props.width)
+        end
         canvas:write(text, 1, 1, props.color or colors.white, props.bg or colors.black)
 
         return function()

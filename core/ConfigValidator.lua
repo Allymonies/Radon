@@ -1,228 +1,69 @@
 local r2l = require("modules.regex")
-
-local configSchema = {
-    branding = {
-        title = "string"
-    },
-    settings = {
-        hideUnavailableProducts = "boolean",
-        pollFrequency = "number",
-        categoryCycleFrequency = "number",
-        activityTimeout = "number",
-        dropDirection = "enum<'forward' | 'up' | 'down' | 'north' | 'south' | 'east' | 'west'>: direction",
-        smallTextKristPayCompatability = "boolean",
-        playSounds = "boolean",
-        showFooter = "boolean"
-    },
-    lang = {
-        footer = "string",
-        footerNoName = "string?",
-        refundRemaining = "string",
-        refundOutOfStock = "string",
-        refundAtLeastOne = "string",
-        refundInvalidProduct = "string",
-        refundNoProduct = "string",
-        refundError = "string"
-    },
-    theme = {
-        formatting = {
-            headerAlign = "enum<'left' | 'center' | 'right'>: alignment",
-            footerAlign = "enum<'left' | 'center' | 'right'>: alignment",
-            footerSize = "enum<'small' | 'medium' | 'large' | 'auto'>: size",
-            productNameAlign = "enum<'left' | 'center' | 'right'>: alignment",
-            layout = "enum<'small' | 'medium' | 'large' | 'auto' | 'custom'>: layout",
-            layoutFile = "file?"
-        },
-        colors = {
-            bgColor = "color",
-            headerBgColor = "color",
-            headerColor = "color",
-            footerBgColor = "color",
-            footerColor = "color",
-            productBgColors = {
-                __type = "array",
-                __min = 1,
-                __entry = "color"
-            },
-            outOfStockQtyColor = "color",
-            lowQtyColor = "color",
-            warningQtyColor = "color",
-            normalQtyColor = "color",
-            productNameColor = "color",
-            outOfStockNameColor = "color",
-            priceColor = "color",
-            addressColor = "color",
-            currencyTextColor = "color",
-            currencyBgColors = {
-                __type = "array",
-                __min = 1,
-                __entry = "color"
-            },
-            catagoryTextColor = "color",
-            categoryBgColors = {
-                __type = "array",
-                __min = 1,
-                __entry = "color"
-            },
-            activeCategoryColor = "color",
-        },
-        palette = {
-            [colors.black] = "number",
-            [colors.blue] = "number",
-            [colors.purple] = "number",
-            [colors.green] = "number",
-            [colors.brown] = "number",
-            [colors.gray] = "number",
-            [colors.lightGray] = "number",
-            [colors.red] = "number",
-            [colors.orange] = "number",
-            [colors.yellow] = "number",
-            [colors.lime] = "number",
-            [colors.cyan] = "number",
-            [colors.magenta] = "number",
-            [colors.pink] = "number",
-            [colors.lightBlue] = "number",
-            [colors.white] = "number"
-        }
-    },
-    sounds = {
-        button = "sound",
-        purchase = "sound",
-    },
-    currencies = {
-        __type = "array",
-        __min = 1,
-        __entry = {
-            id = "string",
-            node = "string?",
-            name = "string?",
-            pkey = "string",
-            pkeyFormat = "enum<'raw' | 'kristwallet'>: pkey format",
-            value = "number?"
-        }
-    },
-    peripherals = {
-        monitor = "string?",
-        speaker = "speaker?",
-        modem = "modem?",
-        shopSyncModem = "modem?",
-        blinker = "enum<'left' | 'right' | 'front' | 'back' | 'top' | 'bottom'>?: side",
-        exchangeChest = "chest?",
-        outputChest = "chest",
-    },
-    hooks = {
-        start = "function?",
-        prePurchase = "function?",
-        purchase = "function?",
-        failedPurchase = "function?",
-        programError = "function?",
-        blink = "function?",
-    },
-    shopSync = {
-        enabled = "boolean?",
-        name = "string?",
-        description = "string?",
-        owner = "string?",
-        location = {
-            coordinates = {
-                __type = "array?",
-                __min = 3,
-                __max = 3,
-                __entry = "number"
-            },
-            description = "string?",
-            dimension = "enum<'overworld' | 'nether' | 'end'>?: dimension"
-        }
-    },
-    exchange = {
-        enabled = "boolean",
-        node = "string"
-    }
-}
-
-local productsSchema = {
-    __type = "array",
-    __entry = {
-        modid = "string",
-        name = "string?",
-        address = "string",
-        order = "number?",
-        quantity = "number?",
-        category = "string?",
-        price = "number",
-        priceOverrides = {
-            __type = "array?",
-            __entry = {
-                currency = "string",
-                price = "number"
-            }
-        },
-        predicate = "table?"
-    }
-}
+local schemas = require("core.schemas")
 
 
 local function typeCheck(entryType, typeName, value, path)
     if value then
         if entryType == "table" and type(value) ~= "table" then
-            error("Config value " .. subpath .. " must be a table")
+            return { path = subpath, error = "Must be a table" }
         end
         if entryType == "string" and type(value) ~= "string" then
-            error("Config value " .. subpath .. " must be a string")
+            return { path = subpath, error = "Must be a string" }
         end
         if entryType == "number" and type(value) ~= "number" then
-            error("Config value " .. subpath .. " must be a number")
+            return { path = subpath, error = "Must be a number" }
         end
         if entryType == "function" and type(value) ~= "function" then
-            error("Config value " .. subpath .. " must be a function")
+            return { path = subpath, error = "Must be a function" }
         end
         if entryType == "file" then
             if type(value) ~= "string" then
-                error("Config value " .. subpath .. " must be a file")
+                return { path = subpath, error = "Must be a file path" }
             end
             if not fs.exists(value) or fs.isDir(value) then
-                error("Config value " .. subpath .. " must refer to a file")
+                return { path = subpath, error = "File must exist" }
             end
         end
         if entryType == "color" then
             if type(value) ~= "number" then
-                error("Config value " .. subpath .. " must be a color")
+                return { path = subpath, error = "Must be a color" }
             end
             m,n = math.frexp(value)
             if m ~= 0.5 or n < 1 or n > 16 then
-                error("Config value " .. subpath .. " must be a color")
+                return { path = subpath, error = "Must be a color" }
             end
         end
         if entryType == "modem" then
             if type(value) ~= "string" then
-                error("Config value " .. subpath .. " must be a modem name")
+                return { path = subpath, error = "Must be a modem name" }
             end
             if peripheral.getType(value) ~= "modem" then
-                error("Config value " .. subpath .. " must refer to a modem")
+                return { path = subpath, error = "Must refer to a modem" }
             end
         end
         if entryType == "speaker" then
             if type(value) ~= "string" then
-                error("Config value " .. subpath .. " must be a speaker name")
+                return { path = subpath, error = "Must be a speaker name" }
             end
             if peripheral.getType(value) ~= "speaker" then
-                error("Config value " .. subpath .. " must refer to a speaker")
+                return { path = subpath, error = "Must refer to a speaker" }
             end
         end
         if entryType == "chest" then
             if type(value) ~= "string" then
-                error("Config value " .. subpath .. " must be a networked chest")
+                return { path = subpath, error = "Must be a chest name" }
             end
-            if not turtle and (value == "left" or value == "right" or value == "front" or value == "back" or value == "top" or value == "bottom") then
-                error("Config value " .. subpath .. " must not be a relative position")
+            -- If relative paths are fixed, add not turtle and
+            if value == "left" or value == "right" or value == "front" or value == "back" or value == "top" or value == "bottom" then
+                return { path = subpath, error = "Must be a network name" }
             end
             if not turtle and value == "self" then
-                error("Config value " .. subpath .. " can only be self for turtles")
+                return { path = subpath, error = "Can only be self for turtles" }
             end
             if value ~= "self" then
                 local chestMethods = peripheral.getMethods(value)
                 if not chestMethods then
-                    error("Config value " .. subpath .. " must refer to a valid peripheral")
+                    return { path = subpath, error = "Must refer to a valid peripheral" }
                 end
                 local hasDropMethod = false
                 for i = 1, #chestMethods do
@@ -232,26 +73,26 @@ local function typeCheck(entryType, typeName, value, path)
                     end
                 end
                 if not hasDropMethod then
-                    error("Config value " .. subpath .. " must refer to a peripheral with an inventory")
+                    return { path = subpath, error = "Must refer to an inventory" }
                 end
             end
         end
         if entryType == "sound" then
             if type(value) ~= "table" then
-                error("Config value " .. subpath .. " must be a sound")
+                return { path = subpath, error = "Must be a sound" }
             end
             if not value.name or type(value.name) ~= "string" then
-                error("Config value " .. subpath .. " must have a name")
+                return { path = subpath, error = "Sound must have a name" }
             end
             if not value.volume or type(value.volume) ~= "number" then
-                error("Config value " .. subpath .. " must have a volume")
+                return { path = subpath, error = "Sound must have a volume" }
             end
             if not value.pitch or type(value.pitch) ~= "number" then
-                error("Config value " .. subpath .. " must have a pitch")
+                return { path = subpath, error = "Sound must have a pitch" }
             end
         end
         if entryType == "boolean" and type(value) ~= "boolean" then
-            error("Config value " .. subpath .. " must be a boolean")
+            return { path = subpath, error = "Must be a boolean" }
         end
         if entryType:sub(1, 5) == "enum<" and entryType:sub(-1) == ">" then
             local enum = entryType:sub(6, -2)
@@ -265,9 +106,9 @@ local function typeCheck(entryType, typeName, value, path)
             end
             if not found then
                 if typeName then
-                    error("Config value " .. subpath .. " must be entryType " .. typeName .. " matching " .. enum)
+                    return { path = subpath, error = "Must be entryType " .. typeName .. " matching " .. enum }
                 else
-                    error("Config value " .. subpath .. " must be one of " .. enum)
+                    return { path = subpath, error = "Must match " .. enum }
                 end
             end
         end
@@ -276,13 +117,14 @@ local function typeCheck(entryType, typeName, value, path)
             local regex = r2l.new(regexString)
             if not regex(value) then
                 if typeName then
-                    error("Config value " .. subpath .. " must be entryType " .. typeName .. " matching " .. regexString)
+                    return { path = subpath, error = "Must be entryType " .. typeName .. " matching " .. regexString }
                 else
-                    error("Config value " .. subpath .. " must match " .. regexString)
+                    return { path = subpath, error = "Must match " .. regexString }
                 end
             end
         end
     end
+    return nil
 end
 
 local function validate(config, schema, path)
@@ -295,21 +137,35 @@ local function validate(config, schema, path)
                 return
             end
             if type(config) ~= "table" then
-                error("Config value " .. path .. " must be an array")
+                return { path = path, error = "Must be an array" }
             end
             if schema.__min and #config < schema.__min then
-                error("Config value " .. path .. " must have at least " .. schema.__min .. " entries")
+                return { path = path, error = "Must have at least " .. schema.__min .. " entries" }
             end
             if schema.__max and #config > schema.__max then
-                error("Config value " .. path .. " must have at most " .. schema.__max .. " entries")
+                return { path = path, error = "Must have at most " .. schema.__max .. " entries" }
             end
             if schema.__entry then
+                local validationErrors = {}
                 for i = 1, #config do
                     if type(config[i]) ~= "table" then
-                        typeCheck(schema.__entry, schema.__entry, config[i], path .. "[" .. i .. "]")
+                        local err = typeCheck(schema.__entry, schema.__entry, config[i], path .. "[" .. i .. "]")
+                        if err then
+                            table.insert(validationErrors, err)
+                        end
                     else
-                        validate(config[i], schema.__entry, path .. "[" .. i .. "]")
+                        local errs = validate(config[i], schema.__entry, path .. "[" .. i .. "]")
+                        if errs and type(errs) == "table" and errs[1] then
+                            for _, err in ipairs(errs) do
+                                table.insert(validationErrors, err)
+                            end
+                        else
+                            table.insert(validationErrors, errs)
+                        end
                     end
+                end
+                if #validationErrors > 0 then
+                    return validationErrors
                 end
             end
         end
@@ -317,10 +173,18 @@ local function validate(config, schema, path)
         if not config then
             config = {}
         end
+        local validationErrors = {}
         for k,v in pairs(schema) do
             subpath = path .. "." .. k
             if type(v) == "table" then
-                validate(config[k], v, subpath)
+                local errs = validate(config[k], v, subpath)
+                if errs and type(errs) == "table" and errs[1] then
+                    for _, err in ipairs(errs) do
+                        table.insert(validationErrors, err)
+                    end
+                else
+                    table.insert(validationErrors, errs)
+                end
             else
                 -- If regex or enum, get type name
                 -- E.g. regex<\w{10}>: address -> address
@@ -330,26 +194,51 @@ local function validate(config, schema, path)
                     v = typeDef
                 end
                 if v:sub(-1) ~= "?" and config[k] == nil then
-                    error("Missing required config value: " .. subpath)
+                    table.insert(validationErrors, {
+                        path = subpath,
+                        error = "Missing required config value"
+                    })
                 end
                 if v:sub(-1) == "?" then
                     v = v:sub(1, -2)
                 end
-                typeCheck(v, typeName, config[k], subpath)
+                local err = typeCheck(v, typeName, config[k], subpath)
+                if err then
+                    table.insert(validationErrors, err)
+                end
             end
+        end
+        if #validationErrors > 0 then
+            return validationErrors
         end
     end
 end
 
+function validationArrayToMap(validationErrors)
+    local map = {}
+    if not validationErrors then
+        return map
+    end
+    for _, err in ipairs(validationErrors) do
+        if err.path then
+            map[err.path:gsub("%[(%d+)%]", "%.%1")] = err.error
+        end
+    end
+    return map
+end
+
 local function validateConfig(config)
-    validate(config, configSchema, "config")
+    return validate(config, schemas.configSchema, "config")
 end
 
 local function validateProducts(products)
-    validate(products, productsSchema, "products")
+    return validate(products, schemas.productsSchema, "products")
 end
 
 return {
+    typeCheck = typeCheck,
+    validate = validate,
     validateConfig = validateConfig,
-    validateProducts = validateProducts
+    validateProducts = validateProducts,
+    validationArrayToMap = validationArrayToMap
 }

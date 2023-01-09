@@ -443,6 +443,20 @@ function TeletextCanvas.new(clear, width, height)
     return self
 end
 
+function TeletextCanvas:reset(clear)
+    for y = 1, self.height do
+        self.canvas[y] = { t = {}, c = {}, b = {}, direct = {} }
+        for x = 1, self.width do
+            self.canvas[y].t[x] = " "
+            self.canvas[y].c[x] = "0"
+            self.canvas[y].b[x] = _hex[clear]
+            self.canvas[y].direct[x] = false
+        end
+    end
+    self.dirty = {} -- { [y] = { [x] = true } }
+    self.dirtyRows = {}
+end
+
 ---Composites the given pixel canvases onto the teletext's internal 
 ---pixel canvas and recomputes the teletext's character data.
 ---@param ... { [1]: PixelCanvas, [2]: integer, [3]: integer }

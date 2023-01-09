@@ -34,9 +34,9 @@ local function render(canvas, display, props, theme, version)
     local selectedCategory = props.shopState.selectedCategory
 
     local currencyEndX = 3
-    if #props.config.currencies > 1 then
-        for i = 1, #props.config.currencies do
-            local symbol = renderHelpers.getCurrencySymbol(props.config.currencies[i], "large")
+    if #props.configState.config.currencies > 1 then
+        for i = 1, #props.configState.config.currencies do
+            local symbol = renderHelpers.getCurrencySymbol(props.configState.config.currencies[i], "large")
             local symbolSize = bigFont:getWidth(symbol)+6
             currencyEndX = currencyEndX + symbolSize + 2
         end
@@ -55,33 +55,33 @@ local function render(canvas, display, props, theme, version)
         end
     end
 
-    local headerCx = math.floor((display.bgCanvas.width - bigFont:getWidth(props.config.branding.title)) / 2)
+    local headerCx = math.floor((display.bgCanvas.width - bigFont:getWidth(props.configState.config.branding.title)) / 2)
     local header
     -- TODO: Change header font size based on width
     if theme.formatting.headerAlign == "center" and headerCx < currencyEndX and #categories == 1 then
         table.insert(elements, Rect { display=display, x=1, y=1, width=currencyEndX, height=bigFont.height+6, color=theme.colors.headerBgColor })
-        header = BigText { display=display, text=props.config.branding.title, x=currencyEndX, y=1, align="left", bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
-    elseif theme.formatting.headerAlign == "center" and headerCx+bigFont:getWidth(props.config.branding.title) > categoryX and #categories > 1 then
+        header = BigText { display=display, text=props.configState.config.branding.title, x=currencyEndX, y=1, align="left", bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
+    elseif theme.formatting.headerAlign == "center" and headerCx+bigFont:getWidth(props.configState.config.branding.title) > categoryX and #categories > 1 then
         table.insert(elements, Rect { display=display, x=categoryX, y=1, width=display.bgCanvas.width-categoryX+1, height=bigFont.height+6, color=theme.colors.headerBgColor })
-        header = BigText { display=display, text=props.config.branding.title, x=1, y=1, align="right", bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=categoryX-1 }
+        header = BigText { display=display, text=props.configState.config.branding.title, x=1, y=1, align="right", bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=categoryX-1 }
     else
-        header = BigText { display=display, text=props.config.branding.title, x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
+        header = BigText { display=display, text=props.configState.config.branding.title, x=1, y=1, align=theme.formatting.headerAlign, bg=theme.colors.headerBgColor, color = theme.colors.headerColor, width=display.bgCanvas.width }
     end
 
     table.insert(elements, header)
 
     local footerHeight = 0
-    if props.config.settings.showFooter then
+    if props.configState.config.settings.showFooter then
         local footerMessage
-        if props.shopState.selectedCurrency.name or not props.config.lang.footerNoName then
-            footerMessage = props.config.lang.footer
+        if props.shopState.selectedCurrency.name or not props.configState.config.lang.footerNoName then
+            footerMessage = props.configState.config.lang.footer
         else
-            footerMessage = props.config.lang.footerNoName
+            footerMessage = props.configState.config.lang.footerNoName
         end
         if props.shopState.selectedCurrency.name and footerMessage:find("%%name%%") then
             footerMessage = footerMessage:gsub("%%name%%", props.shopState.selectedCurrency.name)
         end
-        if footerMessage:find("%%addr%%") then
+        if footerMessage:find("%%addr%%") and props.shopState.selectedCurrency.host then
             footerMessage = footerMessage:gsub("%%addr%%", props.shopState.selectedCurrency.host)
         end
         if footerMessage:find("%%version%%") then
@@ -118,7 +118,7 @@ local function render(canvas, display, props, theme, version)
     local maxNameWidth = 0
     props.shopState.numCategories = #categories
     local catName = categories[selectedCategory].name
-    local shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.config.settings)
+    local shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.configState.config.settings)
     local productsHeight = display.bgCanvas.height - 17 - footerHeight
     local heightPerProduct = math.floor(productsHeight / #shopProducts)
     local layout
@@ -137,7 +137,7 @@ local function render(canvas, display, props, theme, version)
     local currency = props.shopState.selectedCurrency
     local currencySymbol = renderHelpers.getCurrencySymbol(currency, layout)
     while maxAddrWidth == 0 or maxAddrWidth + maxQtyWidth + maxPriceWidth + maxNameWidth > display.bgCanvas.width - 3 do
-        if props.config.theme.formatting.layout == "auto" and (maxAddrWidth + maxQtyWidth + maxPriceWidth + maxNameWidth > display.bgCanvas.width - 3) then
+        if props.configState.config.theme.formatting.layout == "auto" and (maxAddrWidth + maxQtyWidth + maxPriceWidth + maxNameWidth > display.bgCanvas.width - 3) then
             if layout == "large" then
                 layout = "medium"
                 maxAddrWidth = 0
@@ -158,7 +158,7 @@ local function render(canvas, display, props, theme, version)
             local productAddr = product.address .. "@"
             if props.shopState.selectedCurrency.name then
                 if layout == "small" then
-                    if props.config.settings.smallTextKristPayCompatability then
+                    if props.configState.config.settings.smallTextKristPayCompatability then
                         productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
                     else
                         productAddr = product.address .. "@ "
@@ -186,7 +186,7 @@ local function render(canvas, display, props, theme, version)
                 maxNameWidth = math.max(maxNameWidth, renderHelpers.getWidth(product.name, layout)+1)
             end
         end
-        if props.config.theme.formatting.layout ~= "auto" or layout == "small" then
+        if props.configState.config.theme.formatting.layout ~= "auto" or layout == "small" then
             break
         end
     end
@@ -211,7 +211,7 @@ local function render(canvas, display, props, theme, version)
         local productAddr = product.address .. "@"
         if props.shopState.selectedCurrency.name then
             if layout == "small" then
-                if props.config.settings.smallTextKristPayCompatability then
+                if props.configState.config.settings.smallTextKristPayCompatability then
                     productAddr = product.address .. "@" .. props.shopState.selectedCurrency.name
                 else
                     productAddr = product.address .. "@ "
@@ -220,7 +220,7 @@ local function render(canvas, display, props, theme, version)
         else
             productAddr = product.address
         end
-        local kristpayHelperText = props.shopState.selectedCurrency.host
+        local kristpayHelperText = props.shopState.selectedCurrency.host or ""
         if props.shopState.selectedCurrency.name then
             kristpayHelperText = product.address .. "@" .. props.shopState.selectedCurrency.name
         end
@@ -386,9 +386,9 @@ local function render(canvas, display, props, theme, version)
     end
 
     local currencyX = 3
-    if #props.config.currencies > 1 then
-        for i = 1, #props.config.currencies do
-            local symbol = renderHelpers.getCurrencySymbol(props.config.currencies[i], "large")
+    if #props.configState.config.currencies > 1 then
+        for i = 1, #props.configState.config.currencies do
+            local symbol = renderHelpers.getCurrencySymbol(props.configState.config.currencies[i], "large")
             local symbolSize = bigFont:getWidth(symbol)+6+1
             local bgColor = theme.colors.currencyBgColors[((i-1) % #theme.colors.currencyBgColors) + 1]
             table.insert(elements, Button {
@@ -401,10 +401,10 @@ local function render(canvas, display, props, theme, version)
                 color = theme.colors.currencyTextColor,
                 width = symbolSize,
                 onClick = function()
-                    props.shopState.selectedCurrency = props.config.currencies[i]
+                    props.shopState.selectedCurrency = props.configState.config.currencies[i]
                     props.shopState.lastTouched = os.epoch("utc")
-                    if props.config.settings.playSounds then
-                        sound.playSound(props.speaker, props.config.sounds.button)
+                    if props.configState.config.settings.playSounds then
+                        sound.playSound(props.peripherals.speaker, props.configState.config.sounds.button)
                     end
                 end
             })
@@ -439,8 +439,8 @@ local function render(canvas, display, props, theme, version)
                 onClick = function()
                     props.shopState.selectedCategory = i
                     props.shopState.lastTouched = os.epoch("utc")
-                    if props.config.settings.playSounds then
-                        sound.playSound(props.speaker, props.config.sounds.button)
+                    if props.configState.config.settings.playSounds then
+                        sound.playSound(props.peripherals.speaker, props.configState.config.sounds.button)
                     end
                     -- canvas:markRect(1, 16, canvas.width, canvas.height-16)
                 end

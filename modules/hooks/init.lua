@@ -27,6 +27,9 @@ return {
     useTextCanvas = require("modules.hooks.textCanvas"),
     useBoundingBox = require("modules.hooks.aabb").useBoundingBox,
     findNodeAt = require("modules.hooks.aabb").findNodeAt,
+    useInput = require("modules.hooks.input").useInput,
+    findActiveInput = require("modules.hooks.input").findActiveInput,
+    clearActiveInput = require("modules.hooks.input").clearActiveInput,
     useAnimation = require("modules.hooks.animation").useAnimation,
     tickAnimations = require("modules.hooks.animation").tickAnimations,
 }

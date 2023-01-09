@@ -33,26 +33,32 @@ function Display.new(props)
     local TeletextCanvas = canvases.TeletextCanvas
     local TextCanvas = canvases.TextCanvas
 
-
-    if self.mon then
+    self.mon = props.monitor
+    if self.mon and self.mon ~= term then
         self.mon = peripheral.wrap(props.monitor)
     end
-    if not self.mon then
+    if not self.mon and self.mon ~= term then
         self.mon = peripheral.find("monitor")
     end
     if not self.mon then
         self.mon = term
-    else
+    elseif self.mon ~= term then
         self.mon.setTextScale(0.5)
     end
 
     -- Set Riko Palette
-    require("util.setPalette")(self.mon, props.theme.palette)
+    if props.theme and props.theme.palette then
+        require("util.setPalette")(self.mon, props.theme.palette)
+    end
 
-    self.ccCanvas = TeletextCanvas(props.theme.colors.bgColor, self.mon.getSize())
+    local bgColor = colors.black
+    if props.theme and props.theme.colors and props.theme.colors.bgColor then
+        bgColor = props.theme.colors.bgColor
+    end
+    self.ccCanvas = TeletextCanvas(bgColor, self.mon.getSize())
     self.ccCanvas:outputFlush(self.mon)
 
-    self.textCanvas = TextCanvas(props.theme.colors.headerBgColor, self.mon.getSize())
+    self.textCanvas = TextCanvas(bgColor, self.mon.getSize())
 
     self.bgCanvas = self.ccCanvas.pixelCanvas:newFromSize()
     -- for y = 1, self.bgCanvas.height do
