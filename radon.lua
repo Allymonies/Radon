@@ -144,7 +144,6 @@ local Main = Solyd.wrapComponent("Main", function(props)
             end
             flatCanvas = layoutRenderer(canvas, display, props, theme, version)
             if addBg then
-                print("Add", theme.layouts[layoutFile].colors.bgColor)
                 table.insert(flatCanvas, 1, Rect {
                     display = display,
                     x = 1,
