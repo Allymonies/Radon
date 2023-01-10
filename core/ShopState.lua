@@ -177,7 +177,9 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
             end
         end
     else
-        refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundInvalidProduct, true)
+        if state.config.settings.refundInvalidMetaname then
+            refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundInvalidProduct, true)
+        end
         if state.eventHooks and state.eventHooks.failedPurchase then
             eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundInvalidProduct)
         end
@@ -277,7 +279,9 @@ local function runShop(state)
                                 error(err)
                             end
                         else
-                            refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundNoProduct, true)
+                            if state.config.settings.refundInvalidMetaname then
+                                refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundNoProduct, true)
+                            end
                             if state.eventHooks and state.eventHooks.failedPurchase then
                                 eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundNoProduct)
                             end

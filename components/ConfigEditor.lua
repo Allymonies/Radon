@@ -56,8 +56,9 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
         if subConfig[path] then
             subConfig = subConfig[path]
         else
-            subConfig[path] = {}
-            subConfig = subConfig[path]
+            --subConfig[path] = {}
+            --subConfig = subConfig[path]
+            subConfig = {}
         end
         if subSchema[path] then
             subSchema = subSchema[path]
@@ -67,8 +68,9 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
         elseif subSchema.__type and subSchema.__type:sub(1,5) == "array" and subSchema.__entry then
             subSchema = subSchema.__entry
         else
-            subSchema[path] = {}
-            subSchema = subSchema[path]
+            --subSchema[path] = {}
+            --subSchema = subSchema[path]
+            subSchema = {}
         end
         table.insert(paths, path)
     end

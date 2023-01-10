@@ -12,7 +12,8 @@ local configSchema = {
         dropDirection = "enum<'forward' | 'up' | 'down' | 'north' | 'south' | 'east' | 'west'>: direction",
         smallTextKristPayCompatability = "boolean",
         playSounds = "boolean",
-        showFooter = "boolean"
+        showFooter = "boolean",
+        refundInvalidMetaname = "boolean"
     },
     lang = {
         footer = "string",

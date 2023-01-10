@@ -12,6 +12,7 @@ return {
         smallTextKristPayCompatability = true,
         playSounds = true,
         showFooter = true,
+        refundInvalidMetaname = true,
     },
     lang = {
         footer = "/pay <item>@%name% <amt>",
