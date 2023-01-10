@@ -203,15 +203,16 @@ local function setupKrypton(state)
             node = node,
             id = currency.id,
         })
-        table.insert(state.currencies, currency)
-        local kryptonWs = currency.krypton:connect()
-        kryptonWs:subscribe("ownTransactions")
-        kryptonWs:getSelf()
         local pkey = currency.pkey
         if currency.pkeyFormat == "kristwallet" then
             pkey = currency.krypton:toKristWalletFormat(currency.pkey)
         end
         currency.host = currency.krypton:makev2address(pkey)
+        currency.krypton.privateKey = pkey
+        table.insert(state.currencies, currency)
+        local kryptonWs = currency.krypton:connect()
+        kryptonWs:subscribe("ownTransactions")
+        kryptonWs:getSelf()
         if currency.name then
             local name = currency.name
             if name:find("%.") then

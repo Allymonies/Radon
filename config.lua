@@ -230,19 +230,19 @@ return {
     currencies = {
         {
             id = "krist", -- if not krist or tenebra, must supply endpoint
-            -- node = "https://krist.dev"
-            name = nil,
-            pkey = nil,
+            -- node = "https://krist.dev/"
+            name = nil, -- Your krist name, usually ending in .kst
+            pkey = nil, -- Your private key, or password for kristwallet
             pkeyFormat = "raw", -- Currently must be 'raw' or 'kristwallet'
             -- You can get your raw pkey from kristweb or using https://pkey.its-em.ma/
             value = 1.0 -- Default scaling on item prices, can be overridden on a per-item basis
         },
         --[[{
             id = "tenebra", -- if not krist or tenebra, must supply endpoint
-            -- node = "https://krist.dev"
+            -- node = "https://krist.dev/"
             host = "tttttttttt",
-            name = "radon.tst",
-            pkey = "",
+            name = "radon.tst", -- Your krist name, usually ending in .kst
+            pkey = nil, -- Your private key, or password for kristwallet
             pkeyFormat = "raw", -- Currently must be 'raw', kwallet support is planned
             -- You can get your raw pkey from kristweb or using https://pkey.its-em.ma/
             value = 0.1 -- Default scaling on item prices, can be overridden on a per-item basis
