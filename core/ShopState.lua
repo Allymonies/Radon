@@ -127,6 +127,9 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                                 if not state.peripherals.modem.getNameLocal() then
                                     error("Modem is not connected! Try right clicking it")
                                 end
+                                if turtle.getSelectedSlot() ~= 1 then
+                                    turtle.select(1)
+                                end
                                 peripheral.call(productSource.inventory, "pushItems", state.peripherals.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
                                 if state.config.settings.dropDirection == "forward" then
                                     turtle.drop(productSource.amount)
