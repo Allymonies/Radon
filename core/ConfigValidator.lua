@@ -1,6 +1,7 @@
 local r2l = require("modules.regex")
 local schemas = require("core.schemas")
 
+local regexCache = {}
 
 local function typeCheck(entryType, typeName, value, path)
     if value then
@@ -114,7 +115,10 @@ local function typeCheck(entryType, typeName, value, path)
         end
         if entryType:sub(1, 6) == "regex<" and entryType:sub(-1) == ">" then
             local regexString = entryType:sub(7, -2)
-            local regex = r2l.new(regexString)
+            if not regexCache[regexString] then
+                regexCache[regexString] = r2l.new(regexString)
+            end
+            local regex = regexCache[regexString]
             if not regex(value) then
                 if typeName then
                     return { path = subpath, error = "Must be entryType " .. typeName .. " matching " .. regexString }
