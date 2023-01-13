@@ -494,6 +494,8 @@ local success, err = pcall(function() ShopRunner.launchShop(shopState, function(
             if node then
                 node.onClick()
             end
+        elseif name == "term_resize" then
+            terminal.ccCanvas:outputFlush(terminal.mon)
         elseif name == "mouse_click" then
             local x, y = e[3], e[4]
             local clearedInput = hooks.clearActiveInput(terminalContext.input, x, y)
