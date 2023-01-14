@@ -178,7 +178,26 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
 
             props.terminalState.maxScroll = math.max(0, (numKeys*3) - props.height)
             local lastSelect = false
-            for k, v in pairs(fields) do
+            local editorFields = {}
+            for k, _ in pairs(fields) do
+                table.insert(editorFields, k)
+            end
+            -- Sort editorFields alphabetically
+            table.sort(editorFields, function(a, b)
+                -- Return whether the string a should come before b alphabetically
+                if type(a) == "number" and type(b) == "number" then
+                    return a < b
+                elseif type(a) == "number" then
+                    return true
+                elseif type(b) == "number" then
+                    return false
+                else
+                    return a < b
+                end
+            end)
+
+            for _, k in pairs(editorFields) do
+                v = fields[k]
                 lastSelect = false
                 local textY = props.y + 1 + elementY - props.terminalState.scroll
                 local fullPath = props.terminalState.configPath .. "." .. tostring(k)
