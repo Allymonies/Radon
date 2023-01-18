@@ -41,10 +41,12 @@ function partialObjectMatches(partialObject, object)
     return true
 end
 
-local function predicateMatches(predicates, item)
-    local meta = peripheral.call(item.inventory, "getItemDetail", item.slot)
-    item.cachedMeta = meta
-    return partialObjectMatches(predicates, meta)
+local function predicateMatches(predicates, item, allowCached)
+    if not allowCached or not item.cachedMeta then
+        local meta = peripheral.call(item.inventory, "getItemDetail", item.slot)
+        item.cachedMeta = meta
+    end
+    return partialObjectMatches(predicates, item.cachedMeta)
 end
 
 local function findMatchingProducts(products, item)
@@ -52,7 +54,7 @@ local function findMatchingProducts(products, item)
     for i = 1, #products do
         local product = products[i]
         if item.name == product.modid then
-            if not product.predicates or predicateMatches(product.predicates, item) then
+            if not product.predicates or predicateMatches(product.predicates, item, true) then
                 table.insert(matchingProducts, product)
             end
         end
