@@ -1,3 +1,5 @@
+local eventHook = require("util.eventHook")
+
 local itemCache = {}
 
 local partialObjectMatches
@@ -128,7 +130,7 @@ local function getAllInventoryItems(inventories, products)
     return items
 end
 
-local function updateProductInventory(products)
+local function updateProductInventory(products, onInventoryRefresh)
     for i = 1, #products do
         products[i].newQty = 0
     end
@@ -139,6 +141,9 @@ local function updateProductInventory(products)
         local product = products[i]
         product.quantity = product.newQty
         product.newQty = nil
+    end
+    if onInventoryRefresh then
+        eventHook.execute(onInventoryRefresh, products, items)
     end
 end
 

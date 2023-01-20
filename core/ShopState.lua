@@ -97,10 +97,15 @@ end
 
 local function handlePurchase(transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
     local purchasedProduct = nil
-    for _, product in ipairs(state.products) do
-        if product.address:lower() == sentMetaname:lower() or product.name:gsub(" ", ""):lower() == sentMetaname:lower() then
-            purchasedProduct = product
-            break
+    if state.eventHooks and state.eventHooks.preProduct then
+        purchasedProduct = eventHook.execute(state.eventHooks.preProduct, transaction, transactionCurrency, meta, sentMetaname, state.products)
+    end
+    if purchasedProduct == nil then
+        for _, product in ipairs(state.products) do
+            if product.address:lower() == sentMetaname:lower() or product.name:gsub(" ", ""):lower() == sentMetaname:lower() then
+                purchasedProduct = product
+                break
+            end
         end
     end
     if purchasedProduct then
@@ -295,7 +300,11 @@ local function runShop(state)
         end
     end, function()
         while state.running do
-            ScanInventory.updateProductInventory(state.products)
+            local onInventoryRefresh = nil
+            if state.eventHooks and state.eventHooks.onInventoryRefresh then
+                onInventoryRefresh = state.eventHooks.onInventoryRefresh
+            end
+            ScanInventory.updateProductInventory(state.products, onInventoryRefresh)
             if state.config.settings.hideUnavailableProducts then
                 state.productsChanged = true
             end

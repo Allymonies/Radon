@@ -37,27 +37,29 @@ end
 local function getCategories(products)
     local categories = {}
     for _, product in ipairs(products) do
-        local category = product.category
-        if not category then
-            category = "*"
-        end
-        local found = nil
-        for i = 1, #categories do
-            if categories[i].name == category then
-                found = i
-                break
+        if not product.hidden then
+            local category = product.category
+            if not category then
+                category = "*"
             end
-        end
-        if not found then
-            if category == "*" then
-                table.insert(categories, 1, {name=category, products={}})
-                found = 1
-            else
-                table.insert(categories, {name=category, products={}})
-                found = #categories
+            local found = nil
+            for i = 1, #categories do
+                if categories[i].name == category then
+                    found = i
+                    break
+                end
             end
+            if not found then
+                if category == "*" then
+                    table.insert(categories, 1, {name=category, products={}})
+                    found = 1
+                else
+                    table.insert(categories, {name=category, products={}})
+                    found = #categories
+                end
+            end
+            table.insert(categories[found].products, product)
         end
-        table.insert(categories[found].products, product)
     end
     return categories
 end

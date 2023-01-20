@@ -31,5 +31,12 @@ return {
                 }
             }
         }
+    },
+    {
+        modid = "minecraft:barrier",
+        name = "Secret item",
+        address = "secret",
+        hidden = true,
+        price = 1.0
     }
 }

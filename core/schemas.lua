@@ -218,6 +218,7 @@ local productsSchema = {
         name = "string?",
         address = "string",
         category = "string?",
+        hidden = "boolean?",
         price = "number",
         priceOverrides = {
             __type = "array?",

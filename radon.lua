@@ -1,4 +1,4 @@
-local version = "1.3.14"
+local version = "1.3.15"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
 local oldPullEvent = os.pullEvent
