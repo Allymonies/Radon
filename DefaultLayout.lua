@@ -11,6 +11,7 @@ local hooks = require("modules.hooks")
 local useCanvas = hooks.useCanvas
 
 local Button = require("components.Button")
+local BasicButton = require("components.BasicButton")
 local SmolButton = require("components.SmolButton")
 local BigText = require("components.BigText")
 local bigFont = require("fonts.bigfont")
@@ -29,7 +30,7 @@ local loadRIF = require("modules.rif")
 
 local function render(canvas, display, props, theme, version)
     local elements = {}
-
+    local selectedProduct, setSelectedProduct = Solyd.useState("")
     local categories = renderHelpers.getCategories(props.shopState.products)
     local selectedCategory = props.shopState.selectedCategory
 
@@ -100,6 +101,9 @@ local function render(canvas, display, props, theme, version)
         end
         if footerMessage:find("%%version%%") then
             footerMessage = footerMessage:gsub("%%version%%", version)
+        end
+        if selectedProduct and #selectedProduct > 0 and footerMessage:find("<item>") then
+            footerMessage = footerMessage:gsub("<item>", selectedProduct)
         end
 
         if props.shopState.selectedCurrency then
@@ -241,8 +245,17 @@ local function render(canvas, display, props, theme, version)
             kristpayHelperText = product.address .. "@" .. props.shopState.selectedCurrency.name
         end
         local productBgColor = theme.colors.productBgColors[((i-1) % #theme.colors.productBgColors) + 1]
+        local productClickFunction = function()
+            setSelectedProduct(product.address)
+            if props.configState.eventHooks and props.configState.eventHooks.onProductSelected then
+                eventHook.execute(props.configState.eventHooks.onProductSelected, product, currency)
+            end
+            if props.configState.config.settings.playSounds then
+                sound.playSound(props.peripherals.speaker, props.configState.config.sounds.button)
+            end
+        end
         if layout == "large" then
-            table.insert(elements, BigText {
+            table.insert(elements, Button {
                 key="qty-"..catName..tostring(product.id),
                 display=display,
                 text=tostring(product.quantity),
@@ -251,9 +264,10 @@ local function render(canvas, display, props, theme, version)
                 align="center",
                 bg=productBgColor,
                 color=qtyColor,
-                width=maxQtyWidth
+                width=maxQtyWidth,
+                onClick=productClickFunction
             })
-            table.insert(elements, BigText {
+            table.insert(elements, Button {
                 key="name-"..catName..tostring(product.id),
                 display=display,
                 text=product.name,
@@ -262,9 +276,10 @@ local function render(canvas, display, props, theme, version)
                 align=theme.formatting.productNameAlign,
                 bg=productBgColor,
                 color=productNameColor,
-                width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth
+                width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth,
+                onClick=productClickFunction
             })
-            table.insert(elements, BigText {
+            table.insert(elements, Button {
                 key="price-"..catName..tostring(product.id),
                 display=display,
                 text=tostring(productPrice) .. currencySymbol,
@@ -273,9 +288,10 @@ local function render(canvas, display, props, theme, version)
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.priceColor,
-                width=maxPriceWidth
+                width=maxPriceWidth,
+                onClick=productClickFunction
             })
-            table.insert(elements, BigText {
+            table.insert(elements, Button {
                 key="addr-"..catName..tostring(product.id),
                 display=display,
                 text=productAddr,
@@ -284,7 +300,8 @@ local function render(canvas, display, props, theme, version)
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.addressColor,
-                width=maxAddrWidth+4
+                width=maxAddrWidth+4,
+                onClick=productClickFunction
             })
             table.insert(elements, BasicText {
                 key="invis-" .. catName .. tostring(product.id),
@@ -298,7 +315,7 @@ local function render(canvas, display, props, theme, version)
                 width=#(kristpayHelperText)
             })
         elseif layout == "medium" then
-            table.insert(elements, SmolText {
+            table.insert(elements, SmolButton {
                 key="qty-"..catName..tostring(product.id),
                 display=display,
                 text=tostring(product.quantity),
@@ -307,9 +324,10 @@ local function render(canvas, display, props, theme, version)
                 align="center",
                 bg=productBgColor,
                 color=qtyColor,
-                width=maxQtyWidth
+                width=maxQtyWidth,
+                onClick=productClickFunction
             })
-            table.insert(elements, SmolText {
+            table.insert(elements, SmolButton {
                 key="name-"..catName..tostring(product.id),
                 display=display,
                 text=product.name,
@@ -318,9 +336,10 @@ local function render(canvas, display, props, theme, version)
                 align=theme.formatting.productNameAlign,
                 bg=productBgColor,
                 color=productNameColor,
-                width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth
+                width=display.bgCanvas.width-3-maxAddrWidth-maxPriceWidth-maxQtyWidth,
+                onClick=productClickFunction
             })
-            table.insert(elements, SmolText {
+            table.insert(elements, SmolButton {
                 key="price-"..catName..tostring(product.id),
                 display=display,
                 text=tostring(productPrice) .. currencySymbol,
@@ -329,9 +348,10 @@ local function render(canvas, display, props, theme, version)
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.priceColor,
-                width=maxPriceWidth
+                width=maxPriceWidth,
+                onClick=productClickFunction
             })
-            table.insert(elements, SmolText { 
+            table.insert(elements, SmolButton { 
                 ey="addr-"..catName..tostring(product.id),
                 display=display,
                 text=productAddr,
@@ -340,7 +360,8 @@ local function render(canvas, display, props, theme, version)
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.addressColor,
-                width=maxAddrWidth+4
+                width=maxAddrWidth+4,
+                onClick=productClickFunction
             })
             table.insert(elements, BasicText {
                 key="invis-" .. catName .. tostring(product.id),
@@ -354,7 +375,7 @@ local function render(canvas, display, props, theme, version)
                 width=#(kristpayHelperText)
             })
         else
-            table.insert(elements, BasicText {
+            table.insert(elements, BasicButton {
                 key="qty-"..catName..tostring(product.id),
                 display=display,
                 text=tostring(product.quantity),
@@ -363,9 +384,10 @@ local function render(canvas, display, props, theme, version)
                 align="center",
                 bg=productBgColor,
                 color=qtyColor,
-                width=maxQtyWidth
+                width=maxQtyWidth,
+                onClick=productClickFunction
             })
-            table.insert(elements, BasicText {
+            table.insert(elements, BasicButton {
                 key="name-"..catName..tostring(product.id),
                 display=display,
                 text=product.name,
@@ -374,9 +396,10 @@ local function render(canvas, display, props, theme, version)
                 align=theme.formatting.productNameAlign,
                 bg=productBgColor,
                 color=productNameColor,
-                width=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth-maxQtyWidth
+                width=(display.bgCanvas.width/2)-1-maxAddrWidth-maxPriceWidth-maxQtyWidth,
+                onClick=productClickFunction
             })
-            table.insert(elements, BasicText {
+            table.insert(elements, BasicButton {
                 key="price-"..catName..tostring(product.id),
                 display=display,
                 text=tostring(productPrice) .. currencySymbol,
@@ -385,9 +408,10 @@ local function render(canvas, display, props, theme, version)
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.priceColor,
-                width=maxPriceWidth
+                width=maxPriceWidth,
+                onClick=productClickFunction
             })
-            table.insert(elements, BasicText {
+            table.insert(elements, BasicButton {
                 key="addr-"..catName..tostring(product.id),
                 display=display,
                 text=productAddr,
@@ -396,7 +420,8 @@ local function render(canvas, display, props, theme, version)
                 align="right",
                 bg=productBgColor,
                 color=theme.colors.addressColor,
-                width=maxAddrWidth+2
+                width=maxAddrWidth+2,
+                onClick=productClickFunction
             })
         end
     end
@@ -454,6 +479,7 @@ local function render(canvas, display, props, theme, version)
                 width = categoryWidth,
                 onClick = function()
                     props.shopState.selectedCategory = i
+                    setSelectedProduct("")
                     props.shopState.lastTouched = os.epoch("utc")
                     if props.configState.config.settings.playSounds then
                         sound.playSound(props.peripherals.speaker, props.configState.config.sounds.button)

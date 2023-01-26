@@ -13,7 +13,7 @@ local function areAnimationsFinished(uid)
 end
 
 local function launchShop(shopState, mainFunction)
-    parallel.waitForAny(function() ShopState.runShop(shopState) end, mainFunction)
+    parallel.waitForAny(function() shopState:runShop() end, mainFunction)
     -- local shopCoroutine = coroutine.create(function() ShopState.runShop(shopState) end)
     -- local mainCoroutine = coroutine.create(mainFunction)
 

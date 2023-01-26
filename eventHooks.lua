@@ -1,5 +1,5 @@
 return {
-    start = nil, -- function(version, config, products)
+    start = nil, -- function(version, config, products, shopState)
     preProduct = nil, -- function(transaction, transactionCurrency, meta, productAddress, products) returns product
     -- If product is nil, product will be selected by the shop,
     -- If product is false, customer will be refunded for no product found.
@@ -11,4 +11,5 @@ return {
     configSaved = nil, -- function(config) called when config is edited (replaced)
     productsSaved = nil, -- function(products) called when products object is edited (replaced)
     onInventoryRefresh = nil, -- function(products, items) called when inventory is refreshed, product quantity can be set through products table
+    onProductSelected = nil, -- function(product, currency) called when product is clicked on the shop screen
 }

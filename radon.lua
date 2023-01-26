@@ -1,4 +1,4 @@
-local version = "1.3.16"
+local version = "1.3.17"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
 local oldPullEvent = os.pullEvent
@@ -432,7 +432,7 @@ local success, err = pcall(function() ShopRunner.launchShop(shopState, function(
     -- Profiler:activate()
     print("Radon " .. version .. " started")
     if eventHooks and eventHooks.start then
-        eventHook.execute(eventHooks.start, version, config, products)
+        eventHook.execute(eventHooks.start, version, config, products, shopState)
     end
     while true do
         -- add t = t if we need animations

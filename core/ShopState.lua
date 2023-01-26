@@ -95,13 +95,13 @@ local function refund(currency, address, meta, value, message, error)
     end
 end
 
-local function handlePurchase(transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
+function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCurrency)
     local purchasedProduct = nil
-    if state.eventHooks and state.eventHooks.preProduct then
-        purchasedProduct = eventHook.execute(state.eventHooks.preProduct, transaction, transactionCurrency, meta, sentMetaname, state.products)
+    if self.eventHooks and self.eventHooks.preProduct then
+        purchasedProduct = eventHook.execute(self.eventHooks.preProduct, transaction, transactionCurrency, meta, sentMetaname, self.products)
     end
     if purchasedProduct == nil then
-        for _, product in ipairs(state.products) do
+        for _, product in ipairs(self.products) do
             if product.address:lower() == sentMetaname:lower() or product.name:gsub(" ", ""):lower() == sentMetaname:lower() then
                 purchasedProduct = product
                 break
@@ -111,6 +111,9 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
     if purchasedProduct then
         local productPrice = Pricing.getProductPrice(purchasedProduct, transactionCurrency)
         local amountPurchased = math.floor(transaction.value / productPrice)
+        if productPrice == 0 then
+            amountPurchased = math.max(transaction.value, 1)
+        end
         if purchasedProduct.maxQuantity then
             amountPurchased = math.min(amountPurchased, purchasedProduct.maxQuantity)
         end
@@ -121,7 +124,7 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
             end
             if purchasedProduct.bundle and #purchasedProduct.bundle > 0 then
                 for _, bundleProduct in ipairs(purchasedProduct.bundle) do
-                    for _, product in ipairs(state.products) do
+                    for _, product in ipairs(self.products) do
                         if product.address:lower() == bundleProduct.product:lower() or product.name:lower() == bundleProduct.product:lower() or (product.productId and product.productId:lower() == bundleProduct.product:lower()) then
                             local productFound = false
                             for _, productPurchased in ipairs(productsPurchased) do
@@ -141,7 +144,7 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
             end
             local available = amountPurchased
             for _, productPurchased in ipairs(productsPurchased) do
-                local productSources, productAvailable = ScanInventory.findProductItems(state.products, productPurchased.product, productPurchased.quantity * amountPurchased)
+                local productSources, productAvailable = ScanInventory.findProductItems(self.products, productPurchased.product, productPurchased.quantity * amountPurchased)
                 available = math.min(available, math.floor(productAvailable / productPurchased.quantity))
                 productPurchased.sources = productSources
                 if available == 0 then
@@ -154,35 +157,35 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                     local allowPurchase = true
                     local err
                     local errMessage
-                    if state.eventHooks and state.eventHooks.prePurchase then
-                        allowPurchase, err, errMessage = eventHook.execute(state.eventHooks.prePurchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+                    if self.eventHooks and self.eventHooks.prePurchase then
+                        allowPurchase, err, errMessage = eventHook.execute(self.eventHooks.prePurchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
                     end
                     if allowPurchase ~= false then
                         print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.id .. " (refund " .. refundAmount .. ")")
                         for _, productPurchased in ipairs(productsPurchased) do
                             for _, productSource in ipairs(productPurchased.sources) do
-                                if state.config.peripherals.outputChest == "self" then
+                                if self.config.peripherals.outputChest == "self" then
                                     if not turtle then
                                         error("Self output but not a turtle!")
                                     end
-                                    if not state.peripherals.modem.getNameLocal() then
+                                    if not self.peripherals.modem.getNameLocal() then
                                         error("Modem is not connected! Try right clicking it")
                                     end
                                     if turtle.getSelectedSlot() ~= 1 then
                                         turtle.select(1)
                                     end
-                                    peripheral.call(productSource.inventory, "pushItems", state.peripherals.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
-                                    if state.config.settings.dropDirection == "forward" then
+                                    peripheral.call(productSource.inventory, "pushItems", self.peripherals.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
+                                    if self.config.settings.dropDirection == "forward" then
                                         turtle.drop(productSource.amount)
-                                    elseif state.config.settings.dropDirection == "up" then
+                                    elseif self.config.settings.dropDirection == "up" then
                                         turtle.dropUp(productSource.amount)
-                                    elseif state.config.settings.dropDirection == "down" then
+                                    elseif self.config.settings.dropDirection == "down" then
                                         turtle.dropDown(productSource.amount)
                                     else
-                                        error("Invalid drop direction: " .. state.config.settings.dropDirection)
+                                        error("Invalid drop direction: " .. self.config.settings.dropDirection)
                                     end
                                 else
-                                    peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
+                                    peripheral.call(productSource.inventory, "pushItems", self.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
                                     --peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
                                 end
                             end
@@ -192,53 +195,53 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                             purchasedProduct.quantity = math.max(0, purchasedProduct.quantity - available)
                         end
                         if refundAmount > 0 then
-                            refund(transactionCurrency, transaction.from, meta, refundAmount, state.config.lang.refundRemaining)
+                            refund(transactionCurrency, transaction.from, meta, refundAmount, self.config.lang.refundRemaining)
                         end
-                        if state.config.settings.playSounds then
-                            sound.playSound(state.peripherals.speaker, state.config.sounds.purchase)
+                        if self.config.settings.playSounds then
+                            sound.playSound(self.peripherals.speaker, self.config.sounds.purchase)
                         end
-                        if state.eventHooks and state.eventHooks.purchase then
-                            eventHook.execute(state.eventHooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+                        if self.eventHooks and self.eventHooks.purchase then
+                            eventHook.execute(self.eventHooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
                         end
                     else
-                        refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or state.config.lang.refundDenied, err)
-                        if state.eventHooks and state.eventHooks.failedPurchase then
-                            eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or state.config.lang.refundDenied, err)
+                        refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or self.config.lang.refundDenied, err)
+                        if self.eventHooks and self.eventHooks.failedPurchase then
+                            eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or self.config.lang.refundDenied, err)
                         end
                     end
                 else
-                    refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
-                    if state.eventHooks and state.eventHooks.failedPurchase then
-                        eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundOutOfStock)
+                    refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundOutOfStock)
+                    if self.eventHooks and self.eventHooks.failedPurchase then
+                        eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, self.config.lang.refundOutOfStock)
                     end
                 end
             else
-                refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundOutOfStock)
-                if state.eventHooks and state.eventHooks.failedPurchase then
-                    eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundOutOfStock)
+                refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundOutOfStock)
+                if self.eventHooks and self.eventHooks.failedPurchase then
+                    eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, self.config.lang.refundOutOfStock)
                 end
             end
         else
-            refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundAtLeastOne, true)
-            if state.eventHooks and state.eventHooks.failedPurchase then
-                eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, state.config.lang.refundAtLeastOne)
+            refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundAtLeastOne, true)
+            if self.eventHooks and self.eventHooks.failedPurchase then
+                eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, self.config.lang.refundAtLeastOne)
             end
         end
     else
-        if state.config.settings.refundInvalidMetaname then
-            refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundInvalidProduct, true)
+        if self.config.settings.refundInvalidMetaname then
+            refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundInvalidProduct, true)
         end
-        if state.eventHooks and state.eventHooks.failedPurchase then
-            eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundInvalidProduct)
+        if self.eventHooks and self.eventHooks.failedPurchase then
+            eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, nil, self.config.lang.refundInvalidProduct)
         end
     end
 end
 
-local function setupKrypton(state)
-    state.selectedCurrency = state.config.currencies[1]
-    state.currencies = {}
-    state.kryptonListeners = {}
-    for _, currency in ipairs(state.config.currencies) do
+function ShopState:setupKrypton()
+    self.selectedCurrency = self.config.currencies[1]
+    self.currencies = {}
+    self.kryptonListeners = {}
+    for _, currency in ipairs(self.config.currencies) do
         if currency.name == "" then
             currency.name = nil
         end
@@ -259,7 +262,7 @@ local function setupKrypton(state)
         end
         currency.host = currency.krypton:makev2address(pkey)
         currency.krypton.privateKey = pkey
-        table.insert(state.currencies, currency)
+        table.insert(self.currencies, currency)
         local kryptonWs = currency.krypton:connect()
         kryptonWs:subscribe("ownTransactions")
         kryptonWs:getSelf()
@@ -276,27 +279,27 @@ local function setupKrypton(state)
                 error("Name " .. currency.name .. " is not owned by " .. currency.host .. "!")
             end
         end
-        table.insert(state.kryptonListeners, function() kryptonWs:listen() end)
-        state.kryptonReady = true
+        table.insert(self.kryptonListeners, function() kryptonWs:listen() end)
+        self.kryptonReady = true
     end
 end
 
 -- Anytime the shop state is resumed, animation should be finished instantly. (call animation finish hooks)
----@param state ShopState
-local function runShop(state)
+---@param self ShopState
+function ShopState:runShop()
     -- Shop is starting
     -- Wait for config ready
-    while not state.config.ready do sleep(0.5) end
-    state.running = true
-    state.currencies = {}
-    state.kryptonListeners = {}
-    setupKrypton(state)
+    while not self.config.ready do sleep(0.5) end
+    self.running = true
+    self.currencies = {}
+    self.kryptonListeners = {}
+    self:setupKrypton()
     parallel.waitForAny(function()
         while true do
             local event, transactionEvent = os.pullEvent("transaction")
             if event == "transaction" then
                 local transactionCurrency = nil
-                for _, currency in ipairs(state.currencies) do
+                for _, currency in ipairs(self.currencies) do
                     if currency.krypton.id == transactionEvent.source then
                         transactionCurrency = currency
                         break
@@ -316,22 +319,22 @@ local function runShop(state)
                             sentMetaname = meta[1]
                         end
                         if sentMetaname then
-                            local success, err = pcall(handlePurchase, transaction, meta, sentMetaname, transactionCurrency, transactionCurrency, state)
+                            local success, err = pcall(ShopState.handlePurchase, self, transaction, meta, sentMetaname, transactionCurrency)
                             if success then
                                 -- Success :D
                             else
-                                refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundError, true)
-                                if state.eventHooks and state.eventHooks.failedPurchase then
-                                    eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundError)
+                                refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundError, true)
+                                if self.eventHooks and self.eventHooks.failedPurchase then
+                                    eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, nil, self.config.lang.refundError)
                                 end
                                 error(err)
                             end
                         else
-                            if state.config.settings.refundInvalidMetaname then
-                                refund(transactionCurrency, transaction.from, meta, transaction.value, state.config.lang.refundNoProduct, true)
+                            if self.config.settings.refundInvalidMetaname then
+                                refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundNoProduct, true)
                             end
-                            if state.eventHooks and state.eventHooks.failedPurchase then
-                                eventHook.execute(state.eventHooks.failedPurchase, transaction, transactionCurrency, nil, state.config.lang.refundNoProduct)
+                            if self.eventHooks and self.eventHooks.failedPurchase then
+                                eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, nil, self.config.lang.refundNoProduct)
                             end
                         end
                     end
@@ -339,47 +342,47 @@ local function runShop(state)
             end
         end
     end, function()
-        while state.running do
+        while self.running do
             local onInventoryRefresh = nil
-            if state.eventHooks and state.eventHooks.onInventoryRefresh then
-                onInventoryRefresh = state.eventHooks.onInventoryRefresh
+            if self.eventHooks and self.eventHooks.onInventoryRefresh then
+                onInventoryRefresh = self.eventHooks.onInventoryRefresh
             end
-            ScanInventory.updateProductInventory(state.products, onInventoryRefresh)
-            if state.config.settings.hideUnavailableProducts then
-                state.productsChanged = true
+            ScanInventory.updateProductInventory(self.products, onInventoryRefresh)
+            if self.config.settings.hideUnavailableProducts then
+                self.productsChanged = true
             end
-            sleep(state.config.settings.pollFrequency)
+            sleep(self.config.settings.pollFrequency)
         end
     end, function()
-        while state.running do
-            if state.config.settings.categoryCycleFrequency > 0 and os.epoch("utc") > state.lastTouched + (state.config.settings.activityTimeout * 1000) then
-                state.selectedCategory = state.selectedCategory + 1
-                if state.selectedCategory > state.numCategories then
-                    state.selectedCategory = 1
+        while self.running do
+            if self.config.settings.categoryCycleFrequency > 0 and os.epoch("utc") > self.lastTouched + (self.config.settings.activityTimeout * 1000) then
+                self.selectedCategory = self.selectedCategory + 1
+                if self.selectedCategory > self.numCategories then
+                    self.selectedCategory = 1
                 end
-                state.productsChanged = true
+                self.productsChanged = true
             end
-            sleep(math.min(1, state.config.settings.categoryCycleFrequency))
+            sleep(math.min(1, self.config.settings.categoryCycleFrequency))
         end
     end, function()
         local blinkState = false
-        while state.running do
+        while self.running do
             blinkState = not blinkState
-            if state.config.peripherals.blinker then
-                redstone.setOutput(state.config.peripherals.blinker, blinkState) 
+            if self.config.peripherals.blinker then
+                redstone.setOutput(self.config.peripherals.blinker, blinkState) 
             end
-            if state.eventHooks and state.eventHooks.blink then
-                eventHook.execute(state.eventHooks.blink, blinkState)
+            if self.eventHooks and self.eventHooks.blink then
+                eventHook.execute(self.eventHooks.blink, blinkState)
             end
             sleep(blinkFrequency)
         end
     end, function()
-        while state.running do
+        while self.running do
             sleep(shopSyncFrequency)
-            if state.config.shopSync and state.config.shopSync.enabled and state.peripherals.shopSyncModem then
+            if self.config.shopSync and self.config.shopSync.enabled and self.peripherals.shopSyncModem then
                 local items = {}
-                for i = 1, #state.products do
-                    local product = state.products[i]
+                for i = 1, #self.products do
+                    local product = self.products[i]
                     local prices = {}
                     local nbt = nil
                     local predicates = nil
@@ -387,8 +390,8 @@ local function runShop(state)
                         nbt = ""
                         predicates = product.predicates
                     end
-                    for j = 1, #state.config.currencies do
-                        local currency = state.config.currencies[j]
+                    for j = 1, #self.config.currencies do
+                        local currency = self.config.currencies[j]
                         local currencyName = "KST"
                         if currency.krypton and currency.krypton.currency and currency.krypton.currency.currency_symbol then
                             currencyName = currency.krypton.currency.currency_symbol
@@ -417,17 +420,17 @@ local function runShop(state)
                         }
                     })
                 end
-                state.peripherals.shopSyncModem.transmit(shopSyncChannel, os.getComputerID(), {
+                self.peripherals.shopSyncModem.transmit(shopSyncChannel, os.getComputerID(), {
                     type = "ShopSync",
                     info = {
-                        name = state.config.shopSync.name,
-                        description = state.config.shopSync.description,
-                        owner = state.config.shopSync.owner,
+                        name = self.config.shopSync.name,
+                        description = self.config.shopSync.description,
+                        owner = self.config.shopSync.owner,
                         software = {
                             name = "Radon",
-                            version = state.version
+                            version = self.version
                         },
-                        location = state.config.shopSync.location,
+                        location = self.config.shopSync.location,
                     },
                     items = {
 
@@ -436,38 +439,38 @@ local function runShop(state)
             end
         end
     end, function()
-        while state.running do
-            if state.changedCurrencies and state.oldConfig then
-                state.changedCurrencies = false
-                state.kryptonReady = false
-                for i = 1, #state.oldConfig.currencies do
-                    local currency = state.oldConfig.currencies[i]
+        while self.running do
+            if self.changedCurrencies and self.oldConfig then
+                self.changedCurrencies = false
+                self.kryptonReady = false
+                for i = 1, #self.oldConfig.currencies do
+                    local currency = self.oldConfig.currencies[i]
                     if (currency.krypton and currency.krypton.ws) then
                         currency.krypton.ws:disconnect()
                         currency.krypton = nil
                     end
                 end
-                for i = 1, #state.currencies do
-                    local currency = state.currencies[i]
+                for i = 1, #self.currencies do
+                    local currency = self.currencies[i]
                     if (currency.krypton and currency.krypton.ws) then
                         currency.krypton.ws:disconnect()
                         currency.krypton = nil
                     end
                 end
-                setupKrypton(state)
-                state.kryptonReady = true
-                state.oldConfig = nil
+                setupKrypton(self)
+                self.kryptonReady = true
+                self.oldConfig = nil
             end
             sleep(0.5)
         end
     end, function()
-        while state.running do
-            if state.kryptonReady then
+        while self.running do
+            if self.kryptonReady then
                 parallel.waitForAny(function()
-                    while state.kryptonReady do
+                    while self.kryptonReady do
                         sleep(0.5)
                     end
-                end, unpack(state.kryptonListeners))
+                end, unpack(self.kryptonListeners))
             end
             sleep(0.5)
         end
@@ -475,6 +478,5 @@ local function runShop(state)
 end
 
 return {
-    ShopState = ShopState,
-    runShop = runShop,
+    ShopState = ShopState
 }
