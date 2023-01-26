@@ -111,9 +111,44 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
     if purchasedProduct then
         local productPrice = Pricing.getProductPrice(purchasedProduct, transactionCurrency)
         local amountPurchased = math.floor(transaction.value / productPrice)
+        if purchasedProduct.maxQuantity then
+            amountPurchased = math.min(amountPurchased, purchasedProduct.maxQuantity)
+        end
         if amountPurchased > 0 then
-            if purchasedProduct.quantity and purchasedProduct.quantity > 0 then
-                local productSources, available = ScanInventory.findProductItems(state.products, purchasedProduct, amountPurchased)
+            local productsPurchased = {}
+            if purchasedProduct.modid then
+                table.insert(productsPurchased, { product = purchasedProduct, quantity = 1 })
+            end
+            if purchasedProduct.bundle and #purchasedProduct.bundle > 0 then
+                for _, bundleProduct in ipairs(purchasedProduct.bundle) do
+                    for _, product in ipairs(state.products) do
+                        if product.address:lower() == bundleProduct.product:lower() or product.name:lower() == bundleProduct.product:lower() or (product.productId and product.productId:lower() == bundleProduct.product:lower()) then
+                            local productFound = false
+                            for _, productPurchased in ipairs(productsPurchased) do
+                                if productPurchased.product == product then
+                                    productPurchased.quantity = productPurchased.quantity + bundleProduct.quantity
+                                    productFound = true
+                                    break
+                                end
+                            end
+                            if not productFound then
+                                table.insert(productsPurchased, { product = product, quantity = bundleProduct.quantity })
+                            end
+                            break
+                        end
+                    end
+                end
+            end
+            local available = amountPurchased
+            for _, productPurchased in ipairs(productsPurchased) do
+                local productSources, productAvailable = ScanInventory.findProductItems(state.products, productPurchased.product, productPurchased.quantity * amountPurchased)
+                available = math.min(available, math.floor(productAvailable / productPurchased.quantity))
+                productPurchased.sources = productSources
+                if available == 0 then
+                    break
+                end
+            end
+            if available > 0 then
                 local refundAmount = math.floor(transaction.value - (available * productPrice))
                 if available > 0 then
                     local allowPurchase = true
@@ -124,33 +159,38 @@ local function handlePurchase(transaction, meta, sentMetaname, transactionCurren
                     end
                     if allowPurchase ~= false then
                         print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.id .. " (refund " .. refundAmount .. ")")
-                        for _, productSource in ipairs(productSources) do
-                            if state.config.peripherals.outputChest == "self" then
-                                if not turtle then
-                                    error("Self output but not a turtle!")
-                                end
-                                if not state.peripherals.modem.getNameLocal() then
-                                    error("Modem is not connected! Try right clicking it")
-                                end
-                                if turtle.getSelectedSlot() ~= 1 then
-                                    turtle.select(1)
-                                end
-                                peripheral.call(productSource.inventory, "pushItems", state.peripherals.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
-                                if state.config.settings.dropDirection == "forward" then
-                                    turtle.drop(productSource.amount)
-                                elseif state.config.settings.dropDirection == "up" then
-                                    turtle.dropUp(productSource.amount)
-                                elseif state.config.settings.dropDirection == "down" then
-                                    turtle.dropDown(productSource.amount)
+                        for _, productPurchased in ipairs(productsPurchased) do
+                            for _, productSource in ipairs(productPurchased.sources) do
+                                if state.config.peripherals.outputChest == "self" then
+                                    if not turtle then
+                                        error("Self output but not a turtle!")
+                                    end
+                                    if not state.peripherals.modem.getNameLocal() then
+                                        error("Modem is not connected! Try right clicking it")
+                                    end
+                                    if turtle.getSelectedSlot() ~= 1 then
+                                        turtle.select(1)
+                                    end
+                                    peripheral.call(productSource.inventory, "pushItems", state.peripherals.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
+                                    if state.config.settings.dropDirection == "forward" then
+                                        turtle.drop(productSource.amount)
+                                    elseif state.config.settings.dropDirection == "up" then
+                                        turtle.dropUp(productSource.amount)
+                                    elseif state.config.settings.dropDirection == "down" then
+                                        turtle.dropDown(productSource.amount)
+                                    else
+                                        error("Invalid drop direction: " .. state.config.settings.dropDirection)
+                                    end
                                 else
-                                    error("Invalid drop direction: " .. state.config.settings.dropDirection)
+                                    peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
+                                    --peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
                                 end
-                            else
-                                peripheral.call(productSource.inventory, "pushItems", state.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
-                                --peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
                             end
+                            productPurchased.product.quantity = productPurchased.product.quantity - (productPurchased.quantity * available)
                         end
-                        purchasedProduct.quantity = purchasedProduct.quantity - available
+                        if not purchasedProduct.modid then
+                            purchasedProduct.quantity = math.max(0, purchasedProduct.quantity - available)
+                        end
                         if refundAmount > 0 then
                             refund(transactionCurrency, transaction.from, meta, refundAmount, state.config.lang.refundRemaining)
                         end

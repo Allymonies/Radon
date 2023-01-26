@@ -140,6 +140,25 @@ local function updateProductInventory(products, onInventoryRefresh)
     for i = 1, #products do
         local product = products[i]
         product.quantity = product.newQty
+        if product.bundle and #product.bundle > 0 then
+            if not product.modid then
+                product.quantity = nil
+            end
+            for _, bundledProduct in ipairs(product.bundle) do
+                for _, searchProduct in ipairs(products) do
+                    if searchProduct.address:lower() == bundledProduct.product:lower() or searchProduct.name:lower() == bundledProduct.product:lower() or (searchProduct.productId and searchProduct.productId:lower() == bundledProduct.product:lower()) then
+                        local searchQty = searchProduct.newQty
+                        if not searchQty then
+                            searchQty = searchProduct.quantity
+                        end
+                        if not product.quantity then
+                            product.quantity = searchQty
+                        end
+                        product.quantity = math.min(product.quantity, math.min(searchQty / bundledProduct.quantity))
+                    end
+                end
+            end
+        end
         product.newQty = nil
     end
     if onInventoryRefresh then

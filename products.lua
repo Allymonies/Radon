@@ -7,6 +7,7 @@ return {
     },
     {
         modid = "minecraft:lapis_block",
+        productId = "lapis_block",
         name = "Lapis Block",
         address = "lapis",
         category = "ore",
@@ -17,6 +18,22 @@ return {
                 price = 18.0
             }
         },
+    },
+    {
+        name = "Lapis on a stick",
+        address = "ls",
+        price = 9.0,
+        maxQuantity = 1,
+        bundle = {
+            {
+                product = "stick",
+                quantity = 1
+            },
+            {
+                product = "lapis_block",
+                quantity = 1
+            }
+        }
     },
     {
         modid = "minecraft:diamond_pickaxe",

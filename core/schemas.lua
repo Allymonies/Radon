@@ -214,17 +214,26 @@ local configSchema = {
 local productsSchema = {
     __type = "array",
     __entry = {
-        modid = "string",
-        name = "string?",
+        modid = "string?",
+        productId = "string?",
+        name = "string",
         address = "string",
         category = "string?",
         hidden = "boolean?",
+        maxQuantity = "number?",
         price = "number",
         priceOverrides = {
             __type = "array?",
             __entry = {
                 currency = "string",
                 price = "number"
+            }
+        },
+        bundle = {
+            __type = "array?",
+            __entry = {
+                product = "string",
+                quantity = "number"
             }
         },
         predicate = "table?"
