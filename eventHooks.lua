@@ -1,9 +1,10 @@
 return {
     start = nil, -- function(version, config, products, shopState)
-    preProduct = nil, -- function(transaction, transactionCurrency, meta, productAddress, products) returns product
+    preProduct = nil, -- function(transaction, transactionCurrency, meta, productAddress, products) returns product, errored, errorMessage
     -- If product is nil, product will be selected by the shop,
     -- If product is false, customer will be refunded for no product found.
-    prePurchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency) returns continueTransaction, error, errorMessage
+    -- If product is false and errored is true, customer will be refunded with error message.
+    prePurchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency) returns continueTransaction, errored, errorMessage
     purchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency)
     failedPurchase = nil, -- function(transaction, transactionCurrency, product, errorMessage)
     programError = nil, -- function(err)

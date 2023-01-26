@@ -98,7 +98,14 @@ end
 function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCurrency)
     local purchasedProduct = nil
     if self.eventHooks and self.eventHooks.preProduct then
-        purchasedProduct = eventHook.execute(self.eventHooks.preProduct, transaction, transactionCurrency, meta, sentMetaname, self.products)
+        purchasedProduct, err, errorMessage = eventHook.execute(self.eventHooks.preProduct, transaction, transactionCurrency, meta, sentMetaname, self.products)
+        if err then
+            refund(transactionCurrency, transaction.from, meta, transaction.value, errorMessage or self.config.lang.refundDenied, true)
+            if self.eventHooks and self.eventHooks.failedPurchase then
+                eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errorMessage or self.config.lang.refundDenied)
+            end
+            return
+        end
     end
     if purchasedProduct == nil then
         for _, product in ipairs(self.products) do
@@ -108,132 +115,129 @@ function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCu
             end
         end
     end
-    if purchasedProduct then
-        local productPrice = Pricing.getProductPrice(purchasedProduct, transactionCurrency)
-        local amountPurchased = math.floor(transaction.value / productPrice)
-        if productPrice == 0 then
-            amountPurchased = math.max(transaction.value, 1)
-        end
-        if purchasedProduct.maxQuantity then
-            amountPurchased = math.min(amountPurchased, purchasedProduct.maxQuantity)
-        end
-        if amountPurchased > 0 then
-            local productsPurchased = {}
-            if purchasedProduct.modid then
-                table.insert(productsPurchased, { product = purchasedProduct, quantity = 1 })
-            end
-            if purchasedProduct.bundle and #purchasedProduct.bundle > 0 then
-                for _, bundleProduct in ipairs(purchasedProduct.bundle) do
-                    for _, product in ipairs(self.products) do
-                        if product.address:lower() == bundleProduct.product:lower() or product.name:lower() == bundleProduct.product:lower() or (product.productId and product.productId:lower() == bundleProduct.product:lower()) then
-                            local productFound = false
-                            for _, productPurchased in ipairs(productsPurchased) do
-                                if productPurchased.product == product then
-                                    productPurchased.quantity = productPurchased.quantity + bundleProduct.quantity
-                                    productFound = true
-                                    break
-                                end
-                            end
-                            if not productFound then
-                                table.insert(productsPurchased, { product = product, quantity = bundleProduct.quantity })
-                            end
-                            break
-                        end
-                    end
-                end
-            end
-            local available = amountPurchased
-            for _, productPurchased in ipairs(productsPurchased) do
-                local productSources, productAvailable = ScanInventory.findProductItems(self.products, productPurchased.product, productPurchased.quantity * amountPurchased)
-                available = math.min(available, math.floor(productAvailable / productPurchased.quantity))
-                productPurchased.sources = productSources
-                if available == 0 then
-                    break
-                end
-            end
-            if available > 0 then
-                local refundAmount = math.floor(transaction.value - (available * productPrice))
-                if available > 0 then
-                    local allowPurchase = true
-                    local err
-                    local errMessage
-                    if self.eventHooks and self.eventHooks.prePurchase then
-                        allowPurchase, err, errMessage = eventHook.execute(self.eventHooks.prePurchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
-                    end
-                    if allowPurchase ~= false then
-                        print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.id .. " (refund " .. refundAmount .. ")")
-                        for _, productPurchased in ipairs(productsPurchased) do
-                            for _, productSource in ipairs(productPurchased.sources) do
-                                if self.config.peripherals.outputChest == "self" then
-                                    if not turtle then
-                                        error("Self output but not a turtle!")
-                                    end
-                                    if not self.peripherals.modem.getNameLocal() then
-                                        error("Modem is not connected! Try right clicking it")
-                                    end
-                                    if turtle.getSelectedSlot() ~= 1 then
-                                        turtle.select(1)
-                                    end
-                                    peripheral.call(productSource.inventory, "pushItems", self.peripherals.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
-                                    if self.config.settings.dropDirection == "forward" then
-                                        turtle.drop(productSource.amount)
-                                    elseif self.config.settings.dropDirection == "up" then
-                                        turtle.dropUp(productSource.amount)
-                                    elseif self.config.settings.dropDirection == "down" then
-                                        turtle.dropDown(productSource.amount)
-                                    else
-                                        error("Invalid drop direction: " .. self.config.settings.dropDirection)
-                                    end
-                                else
-                                    peripheral.call(productSource.inventory, "pushItems", self.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
-                                    --peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
-                                end
-                            end
-                            productPurchased.product.quantity = productPurchased.product.quantity - (productPurchased.quantity * available)
-                        end
-                        if not purchasedProduct.modid then
-                            purchasedProduct.quantity = math.max(0, purchasedProduct.quantity - available)
-                        end
-                        if refundAmount > 0 then
-                            refund(transactionCurrency, transaction.from, meta, refundAmount, self.config.lang.refundRemaining)
-                        end
-                        if self.config.settings.playSounds then
-                            sound.playSound(self.peripherals.speaker, self.config.sounds.purchase)
-                        end
-                        if self.eventHooks and self.eventHooks.purchase then
-                            eventHook.execute(self.eventHooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
-                        end
-                    else
-                        refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or self.config.lang.refundDenied, err)
-                        if self.eventHooks and self.eventHooks.failedPurchase then
-                            eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or self.config.lang.refundDenied, err)
-                        end
-                    end
-                else
-                    refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundOutOfStock)
-                    if self.eventHooks and self.eventHooks.failedPurchase then
-                        eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, self.config.lang.refundOutOfStock)
-                    end
-                end
-            else
-                refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundOutOfStock)
-                if self.eventHooks and self.eventHooks.failedPurchase then
-                    eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, self.config.lang.refundOutOfStock)
-                end
-            end
-        else
-            refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundAtLeastOne, true)
-            if self.eventHooks and self.eventHooks.failedPurchase then
-                eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, self.config.lang.refundAtLeastOne)
-            end
-        end
-    else
+    if not purchasedProduct then
         if self.config.settings.refundInvalidMetaname then
             refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundInvalidProduct, true)
         end
         if self.eventHooks and self.eventHooks.failedPurchase then
             eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, nil, self.config.lang.refundInvalidProduct)
         end
+        return
+    end
+
+    local productPrice = Pricing.getProductPrice(purchasedProduct, transactionCurrency)
+    local amountPurchased = math.floor(transaction.value / productPrice)
+    if productPrice == 0 then
+        amountPurchased = math.max(transaction.value, 1)
+    end
+    if purchasedProduct.maxQuantity then
+        amountPurchased = math.min(amountPurchased, purchasedProduct.maxQuantity)
+    end
+    if amountPurchased <= 0 then
+        refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundAtLeastOne, true)
+        if self.eventHooks and self.eventHooks.failedPurchase then
+            eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, self.config.lang.refundAtLeastOne)
+        end
+        return
+    end
+
+    local productsPurchased = {}
+    if purchasedProduct.modid then
+        table.insert(productsPurchased, { product = purchasedProduct, quantity = 1 })
+    end
+    if purchasedProduct.bundle and #purchasedProduct.bundle > 0 then
+        for _, bundleProduct in ipairs(purchasedProduct.bundle) do
+            for _, product in ipairs(self.products) do
+                if product.address:lower() == bundleProduct.product:lower() or product.name:lower() == bundleProduct.product:lower() or (product.productId and product.productId:lower() == bundleProduct.product:lower()) then
+                    local productFound = false
+                    for _, productPurchased in ipairs(productsPurchased) do
+                        if productPurchased.product == product then
+                            productPurchased.quantity = productPurchased.quantity + bundleProduct.quantity
+                            productFound = true
+                            break
+                        end
+                    end
+                    if not productFound then
+                        table.insert(productsPurchased, { product = product, quantity = bundleProduct.quantity })
+                    end
+                    break
+                end
+            end
+        end
+    end
+    local available = amountPurchased
+    for _, productPurchased in ipairs(productsPurchased) do
+        local productSources, productAvailable = ScanInventory.findProductItems(self.products, productPurchased.product, productPurchased.quantity * amountPurchased)
+        available = math.min(available, math.floor(productAvailable / productPurchased.quantity))
+        productPurchased.sources = productSources
+        if available == 0 then
+            break
+        end
+    end
+    if available <= 0 then
+        refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundOutOfStock)
+        if self.eventHooks and self.eventHooks.failedPurchase then
+            eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, self.config.lang.refundOutOfStock)
+        end
+        return
+    end
+
+    local refundAmount = math.floor(transaction.value - (available * productPrice))
+    local allowPurchase = true
+    local err
+    local errMessage
+    if self.eventHooks and self.eventHooks.prePurchase then
+        allowPurchase, err, errMessage = eventHook.execute(self.eventHooks.prePurchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+    end
+    if allowPurchase == false then
+        refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or self.config.lang.refundDenied, err)
+        if self.eventHooks and self.eventHooks.failedPurchase then
+            eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or self.config.lang.refundDenied, err)
+        end
+        return
+    end
+
+    print("Purchased " .. available .. " of " .. purchasedProduct.name .. " for " .. transaction.from .. " for " .. transaction.value .. " " .. transactionCurrency.id .. " (refund " .. refundAmount .. ")")
+    for _, productPurchased in ipairs(productsPurchased) do
+        for _, productSource in ipairs(productPurchased.sources) do
+            if self.config.peripherals.outputChest == "self" then
+                if not turtle then
+                    error("Self output but not a turtle!")
+                end
+                if not self.peripherals.modem.getNameLocal() then
+                    error("Modem is not connected! Try right clicking it")
+                end
+                if turtle.getSelectedSlot() ~= 1 then
+                    turtle.select(1)
+                end
+                peripheral.call(productSource.inventory, "pushItems", self.peripherals.modem.getNameLocal(), productSource.slot, productSource.amount, 1)
+                if self.config.settings.dropDirection == "forward" then
+                    turtle.drop(productSource.amount)
+                elseif self.config.settings.dropDirection == "up" then
+                    turtle.dropUp(productSource.amount)
+                elseif self.config.settings.dropDirection == "down" then
+                    turtle.dropDown(productSource.amount)
+                else
+                    error("Invalid drop direction: " .. self.config.settings.dropDirection)
+                end
+            else
+                peripheral.call(productSource.inventory, "pushItems", self.config.peripherals.outputChest, productSource.slot, productSource.amount, 1)
+                --peripheral.call(state.config.peripherals.outputChest, "drop", 1, productSource.amount, state.config.settings.dropDirection)
+            end
+        end
+        productPurchased.product.quantity = productPurchased.product.quantity - (productPurchased.quantity * available)
+    end
+    if not purchasedProduct.modid then
+        purchasedProduct.quantity = math.max(0, purchasedProduct.quantity - available)
+    end
+    if refundAmount > 0 then
+        refund(transactionCurrency, transaction.from, meta, refundAmount, self.config.lang.refundRemaining)
+    end
+    if self.config.settings.playSounds then
+        sound.playSound(self.peripherals.speaker, self.config.sounds.purchase)
+    end
+    if self.eventHooks and self.eventHooks.purchase then
+        eventHook.execute(self.eventHooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
     end
 end
 
@@ -457,7 +461,7 @@ function ShopState:runShop()
                         currency.krypton = nil
                     end
                 end
-                setupKrypton(self)
+                self:setupKrypton()
                 self.kryptonReady = true
                 self.oldConfig = nil
             end
