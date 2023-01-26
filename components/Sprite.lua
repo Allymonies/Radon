@@ -1,7 +1,9 @@
 local Solyd = require("modules.solyd")
+local hooks = require("modules.hooks")
+local useCanvas = hooks.useCanvas
 
 return Solyd.wrapComponent("Sprite", function(props)
-    local canvas = Solyd.useContext("canvas")[1]
+    local canvas = useCanvas(props.display, props.sprite.width, props.sprite.height)
 
     Solyd.useEffect(function()
         -- local s, x, y = props.sprite, props.x, props.y
