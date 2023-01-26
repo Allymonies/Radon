@@ -23,6 +23,7 @@ SOFTWARE.
 ]]
 
 local canvases = require("modules.canvas")
+local base64 = require("util.base64")
 local PixelCanvas = canvases.PixelCanvas
 
 -- local palMap = {
@@ -69,9 +70,14 @@ for i = 1, 16 do
     --colors[revPalMap[i]] = 2^(i - 1)
 end
 
-return function(data)
-    -- Riko 4 image format
+local fileCache = {}
 
+return function(filename)
+    -- Riko 4 image format
+    local data = fileCache[filename]
+    if not data then
+        data = base64.decode(require(filename))
+    end
     local width, height = data:byte(5) * 256 + data:byte(6), data:byte(7) * 256 + data:byte(8)
     local canv = PixelCanvas(width, height)
     local buffer = canv.canvas
