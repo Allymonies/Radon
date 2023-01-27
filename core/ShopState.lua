@@ -382,6 +382,15 @@ function ShopState:runShop()
         end
     end, function()
         while self.running do
+            -- Run event hook for the parallel constant running task
+            -- This can do things like listen to events or host applications
+            if self.eventHooks and self.eventHooks.parallel then
+                eventHook.execute(self.eventHooks.parallel)
+            end
+            sleep(blinkFrequency)
+        end
+    end, function()
+        while self.running do
             sleep(shopSyncFrequency)
             if self.config.shopSync and self.config.shopSync.enabled and self.peripherals.shopSyncModem then
                 local items = {}

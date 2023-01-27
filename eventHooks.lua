@@ -13,4 +13,5 @@ return {
     productsSaved = nil, -- function(products) called when products object is edited (replaced)
     onInventoryRefresh = nil, -- function(products, items) called when inventory is refreshed, product quantity can be set through products table
     onProductSelected = nil, -- function(product, currency) called when product is clicked on the shop screen
+    parallel = nil, -- function() called in parallel constantly. Allowed to be blocking for usage in creating parallel apps.
 }
