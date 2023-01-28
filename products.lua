@@ -44,7 +44,7 @@ return {
         predicates = {
             enchantments = {
                 {
-                    fullName = "Efficiency V"
+                    displayName = "Efficiency V"
                 }
             }
         }
