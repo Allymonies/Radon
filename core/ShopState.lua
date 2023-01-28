@@ -333,7 +333,7 @@ function ShopState:runShop()
                                 end
                                 error(err)
                             end
-                        else
+                        elseif self.config.settings.refundMissingMetaname then
                             if self.config.settings.refundInvalidMetaname then
                                 refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundNoProduct, true)
                             end
