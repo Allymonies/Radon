@@ -6,7 +6,7 @@ local function getDisplayedProducts(allProducts, settings)
     for i = 1, #allProducts do
         local product = allProducts[i]
         product.id = i
-        if not settings.hideUnavailableProducts or product.quantity > 0 then
+        if not settings.hideUnavailableProducts or (product.quantity and product.quantity > 0) then
             table.insert(displayedProducts, product)
         end
     end
