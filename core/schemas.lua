@@ -13,7 +13,8 @@ local configSchema = {
         smallTextKristPayCompatability = "boolean",
         playSounds = "boolean",
         showFooter = "boolean",
-        refundInvalidMetaname = "boolean"
+        refundInvalidMetaname = "boolean",
+        refundMissingMetaname = "boolean"
     },
     lang = {
         footer = "string",
