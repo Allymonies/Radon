@@ -135,8 +135,12 @@ local function render(canvas, display, props, theme, version)
     local maxPriceWidth = 0
     local maxNameWidth = 0
     props.shopState.numCategories = #categories
-    local catName = categories[selectedCategory].name
-    local shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.configState.config.settings)
+    local catName = "*"
+    local shopProducts = {}
+    if categories[selectedCategory] then
+        catName = categories[selectedCategory].name
+        shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.configState.config.settings)
+    end
     local productsHeight = display.bgCanvas.height - headerHeight - footerHeight - 2
     local heightPerProduct = math.floor(productsHeight / #shopProducts)
     local layout
@@ -154,7 +158,7 @@ local function render(canvas, display, props, theme, version)
 
     local currency = props.shopState.selectedCurrency
     local currencySymbol = renderHelpers.getCurrencySymbol(currency, layout)
-    while maxAddrWidth == 0 or maxAddrWidth + maxQtyWidth + maxPriceWidth + maxNameWidth > display.bgCanvas.width - 3 do
+    while #shopProducts > 0 and (maxAddrWidth == 0 or maxAddrWidth + maxQtyWidth + maxPriceWidth + maxNameWidth > display.bgCanvas.width - 3) do
         if props.configState.config.theme.formatting.layout == "auto" and (maxAddrWidth + maxQtyWidth + maxPriceWidth + maxNameWidth > display.bgCanvas.width - 3) then
             if layout == "large" then
                 layout = "medium"

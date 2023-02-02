@@ -33,7 +33,10 @@ local function render(canvas, display, props, theme, version)
 
     local categories = renderHelpers.getCategories(props.shopState.products)
     local selectedCategory = props.shopState.selectedCategory
-    local shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.configState.config.settings)
+    local shopProducts = {}
+    if categories[selectedCategory] then
+        shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.configState.config.settings)
+    end
     local currency = props.shopState.selectedCurrency
 
     local headerSuffix = ""
