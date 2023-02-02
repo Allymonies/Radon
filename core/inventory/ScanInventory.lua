@@ -193,11 +193,23 @@ end
 local function findProductItemsFrom(product, quantity, items, cached)
     local sources = {}
     local remaining = quantity
+    if product.predicates and not product.predicatesString then
+        product.predicatesString = textutils.serialize(product.predicates)
+    end
     for i = 1, #items do
         local item = items[i]
         local inventory = item.inventory
         local slot = item.slot
-        if item.name == product.modid and (not cached or not product.predicates or (item.cachedMeta and partialObjectMatches(product.predicates, item.cachedMeta))) then
+        local cacheHit = false
+        if item.nbt and nbtHashCache[item.name .. "." .. item.nbt] then
+            for j = 1, #nbtHashCache[item.name .. "." .. item.nbt] do
+                if nbtHashCache[item.name .. "." .. item.nbt][j] == product.predicatesString then
+                    cacheHit = true
+                    break
+                end
+            end
+        end
+        if item.name == product.modid and (not cached or not product.predicates or cacheHit or (item.cachedMeta and partialObjectMatches(product.predicates, item.cachedMeta))) then
             if cached or product.predicates then
                 item = peripheral.call(inventory, "getItemDetail", slot)
             end
