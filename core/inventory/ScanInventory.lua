@@ -1,6 +1,7 @@
 local eventHook = require("util.eventHook")
 
 local itemCache = {}
+local nbtHashCache = {}
 
 local partialObjectMatches
 local function partialArrayMatches(partialArray, array)
@@ -55,10 +56,28 @@ local function findMatchingProducts(products, item)
     local matchingProducts = {}
     for i = 1, #products do
         local product = products[i]
+        if product.predicates and not product.predicatesString then
+            product.predicatesString = textutils.serialize(product.predicates)
+        end
         if item.name == product.modid then
-            if not product.predicates or predicateMatches(product.predicates, item, true) then
-                table.insert(matchingProducts, product)
+            if product.predicates and item.nbt and nbtHashCache[item.name .. "." .. item.nbt] then
+                for j = 1, #nbtHashCache[item.name .. "." .. item.nbt] do
+                    if nbtHashCache[item.name .. "." .. item.nbt][j] == product.predicatesString then
+                        table.insert(matchingProducts, product)
+                        break
+                    end
+                end
+            else
+                if not product.predicates or predicateMatches(product.predicates, item, true) then
+                    table.insert(matchingProducts, product)
+                end
             end
+        end
+    end
+    if item.nbt and not nbtHashCache[item.name .. "." .. item.nbt] then
+        nbtHashCache[item.name .. "." .. item.nbt] = {}
+        for i = 1, #matchingProducts do
+            table.insert(nbtHashCache[item.name .. "." .. item.nbt], matchingProducts[i].predicatesString)
         end
     end
     return matchingProducts
@@ -139,6 +158,7 @@ local function updateProductInventory(products, onInventoryRefresh)
     itemCache = items
     for i = 1, #products do
         local product = products[i]
+        product.predicatesString = nil
         product.quantity = product.newQty
         if product.bundle and #product.bundle > 0 then
             if not product.modid then
@@ -216,11 +236,19 @@ local function findProductItems(products, product, quantity)
         items = getItemCache()
         sources, amount = findProductItemsFrom(product, quantity, items)
     end
+    for i = 1, #products do
+        products[i].predicatesString = nil
+    end
     return sources, amount
+end
+
+function clearNbtCache()
+    nbtHashCache = {}
 end
 
 return {
     updateProductInventory = updateProductInventory,
     getItemCache = getItemCache,
-    findProductItems = findProductItems
+    findProductItems = findProductItems,
+    clearNbtCache = clearNbtCache
 }

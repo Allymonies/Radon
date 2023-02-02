@@ -298,6 +298,7 @@ function ShopState:runShop()
     self.currencies = {}
     self.kryptonListeners = {}
     self:setupKrypton()
+    ScanInventory.clearNbtCache()
     parallel.waitForAny(function()
         while true do
             local event, transactionEvent = os.pullEvent("transaction")

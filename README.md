@@ -47,6 +47,8 @@ Radon is designed to be highly configurable. Look through `config.lua` for what 
 
 For custom logic, you can define functions in `eventHooks.lua`, hooks define event hook functions to be executed when their respective event happens. Use this when you need additional functional (such as posting to webhooks) when the shop starts, a purchase happens or fails, an error occurs, and other events.
 
+**IMPORTANT:** If you modify products' predicates in code (in event hooks), call `ScanInventory.clearNbtCache` as products cache which item nbt hashes match the predicates.
+
 # Layouts
 
 Radon has support for custom layouts in lua. While shops like Xenon are easier to configure, Radon offers a lot of flexibility, you get to write the code that renders the layout.

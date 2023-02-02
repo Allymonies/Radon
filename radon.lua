@@ -1,6 +1,7 @@
-local version = "1.3.22"
+local version = "1.3.23"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
+local ScanInventory = require("core.inventory.ScanInventory")
 local oldPullEvent = os.pullEvent
 os.pullEvent = os.pullEventRaw
 local oldPrint = print
@@ -323,6 +324,7 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
                 if (not props.terminalState.configErrors or #props.terminalState.configErrors == 0) and (not props.terminalState.productsErrors or #props.terminalState.productsErrors == 0) then
                     props.configState.config.ready = true
                 end
+                ScanInventory.clearNbtCache()
                 local f = fs.open("products.lua", "w")
                 f.write("return " .. textutils.serialize(newConfig))
                 f.close()
