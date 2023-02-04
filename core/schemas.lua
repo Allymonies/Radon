@@ -171,6 +171,7 @@ local configSchema = {
     },
     currencies = {
         __type = "array",
+        __label = "id",
         __min = 1,
         __entry = {
             id = "string",
@@ -214,6 +215,7 @@ local configSchema = {
 
 local productsSchema = {
     __type = "array",
+    __label = "name",
     __entry = {
         modid = "string?",
         productId = "string?",
@@ -225,6 +227,7 @@ local productsSchema = {
         price = "number",
         priceOverrides = {
             __type = "array?",
+            __label = "currency",
             __entry = {
                 currency = "string",
                 price = "number"
@@ -232,6 +235,7 @@ local productsSchema = {
         },
         bundle = {
             __type = "array?",
+            __label = "product",
             __entry = {
                 product = "string",
                 quantity = "number"

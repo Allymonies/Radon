@@ -161,10 +161,16 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
         if not subSchema.__type or true then
             local fields = subSchema
             local xOffset = 0
+            local isArray = false
+            local arrayLabel = nil
             if subSchema.__type and subSchema.__type:sub(1,5) == "array" and subSchema.__entry then
                 fields = score.copyDeep(subConfig)
                 numKeys = numKeys + 1
                 xOffset = 1
+                isArray = true
+                if subSchema.__label then
+                    arrayLabel = subSchema.__label
+                end
             end
             for k, _ in pairs(fields) do
                 numKeys = numKeys + 1
@@ -303,17 +309,30 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                     end
                 end
                 if type(v) == "table" or type(v) == "string" and v:sub(1,5) == "sound" then
+                    local label = k
+                    if isArray and arrayLabel then
+                        local labelPath = fullPath .. "." .. arrayLabel
+                        if labelPath:sub(1,1) == "." then
+                            labelPath = labelPath:sub(2)
+                        end
+                        if type(v) == "table" and configDiffs[labelPath] then
+                            label = configDiffs[labelPath]
+                        elseif type(v) == "table" and subConfig[tonumber(k)] and subConfig[tonumber(k)][arrayLabel] then
+                            label = subConfig[tonumber(k)][arrayLabel]
+                        end
+                    end
+                    print(textutils.serialize(configDiffs))
                     if textY >= props.y + 1 and textY <= props.y + props.height then
                         table.insert(elements, BasicButton {
                             key = "config-"..k,
                             display = props.display,
                             align = "left",
-                            text = " " .. k .. " ",
+                            text = " " .. label .. " ",
                             x = props.x + xOffset,
                             y = textY,
                             color = buttonTextColor,
                             bg = buttonColor,
-                            width = math.min(#k+2, props.width - 2) - xOffset,
+                            width = math.min(#label+2, props.width - 2) - xOffset,
                             onClick = function()
                                 props.terminalState.scroll = 0
                                 table.insert(paths, k)
@@ -332,7 +351,7 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                             y = textY,
                             color = buttonTextColor,
                             bg = buttonColor,
-                            width = math.min(#k+2, props.width - 2) - xOffset,
+                            width = math.min(#label+2, props.width - 2) - xOffset,
                             onClick = function()
                                 props.terminalState.scroll = 0
                                 table.insert(paths, k)
