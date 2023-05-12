@@ -318,6 +318,7 @@ local function _render(previousTree, rootComponent, parentContext, forceRender)
         return { src = nil }
     end
 
+
     if forceRender
     or not previousTree
     or propsChanged(previousTree.src.propsDiff, rootComponent.propsDiff)

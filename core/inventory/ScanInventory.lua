@@ -1,4 +1,5 @@
 local eventHook = require("util.eventHook")
+local score = require("util.score")
 
 local itemCache = {}
 local nbtHashCache = {}
@@ -154,6 +155,8 @@ local function updateProductInventory(products, onInventoryRefresh)
         products[i].newQty = 0
     end
     local inventories = getInventories()
+    local originalProducts = products
+    products = score.copyDeep(originalProducts)
     local items = getAllInventoryItems(inventories, products)
     itemCache = items
     for i = 1, #products do
@@ -180,6 +183,8 @@ local function updateProductInventory(products, onInventoryRefresh)
             end
         end
         product.newQty = nil
+        product.__opaque = true
+        originalProducts[i] = product
     end
     if onInventoryRefresh then
         eventHook.execute(onInventoryRefresh, products, items)

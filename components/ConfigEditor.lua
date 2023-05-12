@@ -321,7 +321,7 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                             label = subConfig[tonumber(k)][arrayLabel]
                         end
                     end
-                    print(textutils.serialize(configDiffs))
+                    --print(textutils.serialize(configDiffs))
                     if textY >= props.y + 1 and textY <= props.y + props.height then
                         table.insert(elements, BasicButton {
                             key = "config-"..k,

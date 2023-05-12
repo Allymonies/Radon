@@ -1,4 +1,4 @@
-local version = "1.3.24"
+local version = "1.3.25"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
 local ScanInventory = require("core.inventory.ScanInventory")
@@ -426,12 +426,12 @@ end
 
 local shopState = Core.ShopState.new(config, products, peripherals, version, logs, eventHooks)
 
-local Profiler = require("profile")
+--local Profiler = require("profile")
 
 
 local deltaTimer = os.startTimer(0)
 local success, err = pcall(function() ShopRunner.launchShop(shopState, function()
-    -- Profiler:activate()
+    --Profiler:activate()
     print("Radon " .. version .. " started")
     if eventHooks and eventHooks.start then
         eventHook.execute(eventHooks.start, version, config, products, shopState)
@@ -439,11 +439,8 @@ local success, err = pcall(function() ShopRunner.launchShop(shopState, function(
     while true do
         -- add t = t if we need animations
         tree = Solyd.render(tree, Main { configState = configState, shopState = shopState, peripherals = peripherals})
-
         local context = Solyd.getTopologicalContext(tree, { "canvas", "aabb" })
-
         diffCanvasStack(display, context.canvas, lastCanvases[1])
-
         local t1 = os.epoch("utc")
         local cstack = { {display.bgCanvas, 1, 1}, unpack(context.canvas) }
         -- cstack[#cstack+1] = {display.textCanvas, 1, 1}
@@ -480,78 +477,88 @@ local success, err = pcall(function() ShopRunner.launchShop(shopState, function(
         end
 
 
-        local e = { os.pullEvent() }
-        local name = e[1]
-        if name == "timer" and e[2] == deltaTimer then
-            -- local clock = os.epoch("utc")
-            -- local dt = (clock - lastClock)/1000
-            -- t = t + dt
-            -- lastClock = clock
-            -- deltaTimer = os.startTimer(0)
+        local receivedEvent = false
+        local terminate = false
+        while not receivedEvent do
+            local e = { os.pullEvent() }
+            receivedEvent = true
+            local name = e[1]
+            if name == "timer" and e[2] == deltaTimer then
+                -- local clock = os.epoch("utc")
+                -- local dt = (clock - lastClock)/1000
+                -- t = t + dt
+                -- lastClock = clock
+                -- deltaTimer = os.startTimer(0)
 
-            -- hooks.tickAnimations(dt)
-        elseif name == "monitor_touch" and e[2] == peripheral.getName(display.mon) then
-            local x, y = e[3], e[4]
-            local node = hooks.findNodeAt(context.aabb, x, y)
-            if node then
-                node.onClick()
-            end
-        elseif name == "term_resize" then
-            terminal.ccCanvas:outputFlush(terminal.mon)
-        elseif name == "mouse_click" then
-            local x, y = e[3], e[4]
-            local clearedInput = hooks.clearActiveInput(terminalContext.input, x, y)
-            if clearedInput and clearedInput.onBlur then
-                clearedInput.onBlur()
-            end
-            local node = hooks.findNodeAt(terminalContext.aabb, x, y)
-            if node then
-                node.onClick()
-            end
-        elseif name == "mouse_scroll" then
-            local dir = e[2]
-            local x, y = e[3], e[4]
-            local node = hooks.findNodeAt(terminalContext.aabb, x, y)
-            local cancelScroll = false
-            if node and node.onScroll then
-                if node.onScroll(dir) then
-                    cancelScroll = true
+                -- hooks.tickAnimations(dt)
+            elseif name == "timer" then
+                receivedEvent = false
+            elseif name == "monitor_touch" and e[2] == peripheral.getName(display.mon) then
+                local x, y = e[3], e[4]
+                local node = hooks.findNodeAt(context.aabb, x, y)
+                if node then
+                    node.onClick()
                 end
-            end
-            if not cancelScroll then
-                if dir >= 1 and terminalState.scroll < terminalState.maxScroll then
-                    terminalState.scroll = math.min(terminalState.scroll + dir, terminalState.maxScroll)
-                elseif dir <= -1 and terminalState.scroll > 0 then
-                    terminalState.scroll = math.max(terminalState.scroll + dir, 0)
+            elseif name == "term_resize" then
+                terminal.ccCanvas:outputFlush(terminal.mon)
+            elseif name == "mouse_click" then
+                local x, y = e[3], e[4]
+                local clearedInput = hooks.clearActiveInput(terminalContext.input, x, y)
+                if clearedInput and clearedInput.onBlur then
+                    clearedInput.onBlur()
                 end
+                local node = hooks.findNodeAt(terminalContext.aabb, x, y)
+                if node then
+                    node.onClick()
+                end
+            elseif name == "mouse_scroll" then
+                local dir = e[2]
+                local x, y = e[3], e[4]
+                local node = hooks.findNodeAt(terminalContext.aabb, x, y)
+                local cancelScroll = false
+                if node and node.onScroll then
+                    if node.onScroll(dir) then
+                        cancelScroll = true
+                    end
+                end
+                if not cancelScroll then
+                    if dir >= 1 and terminalState.scroll < terminalState.maxScroll then
+                        terminalState.scroll = math.min(terminalState.scroll + dir, terminalState.maxScroll)
+                    elseif dir <= -1 and terminalState.scroll > 0 then
+                        terminalState.scroll = math.max(terminalState.scroll + dir, 0)
+                    end
+                end
+            elseif name == "char" then
+                local char = e[2]
+                local node = hooks.findActiveInput(terminalContext.input)
+                if node then
+                    node.onChar(char)
+                end
+            elseif name == "key" then
+                --if e[2] == keys.q then
+                --    break
+                --end
+                local key, held = e[2] or 0, e[3] or false
+                local node = hooks.findActiveInput(terminalContext.input)
+                if node then
+                    node.onKey(key, held)
+                end
+            elseif name == "paste" then
+                local contents = e[2]
+                local node = hooks.findActiveInput(terminalContext.input)
+                if node and node.onPaste then
+                    node.onPaste(contents)
+                end
+            elseif name == "terminate" then
+                terminate = true
+                break
             end
-        elseif name == "char" then
-            local char = e[2]
-            local node = hooks.findActiveInput(terminalContext.input)
-            if node then
-                node.onChar(char)
-            end
-        elseif name == "key" then
-            local key, held = e[2] or 0, e[3] or false
-            local node = hooks.findActiveInput(terminalContext.input)
-            if node then
-                node.onKey(key, held)
-            end
-        elseif name == "paste" then
-            local contents = e[2]
-            local node = hooks.findActiveInput(terminalContext.input)
-            if node and node.onPaste then
-                node.onPaste(contents)
-            end
-        -- elseif name == "key" then
-        --     if e[2] == keys.q then
-        --         break
-        --     end
-        elseif name == "terminate" then
+        end
+        if terminate then
             break
         end
     end
-    -- Profiler:deactivate()
+    ---Profiler:deactivate()
 end) end)
 
 display.mon.clear()
@@ -574,4 +581,4 @@ if not success then
     error(err)
 end
 print("Radon terminated, goodbye!")
--- Profiler:write_results(nil, "profile.txt")
+--Profiler:write_results(nil, "profile.txt")
