@@ -165,6 +165,9 @@ function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCu
             end
         end
     end
+    if self.eventHooks and self.eventHooks.preStockCheck then
+        eventHook.execute(self.eventHooks.preStockCheck, transaction, productsPurchased, self.products)
+    end
     local available = amountPurchased
     for _, productPurchased in ipairs(productsPurchased) do
         local productSources, productAvailable = ScanInventory.findProductItems(self.products, productPurchased.product, productPurchased.quantity * amountPurchased)
@@ -187,12 +190,14 @@ function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCu
     local err
     local errMessage
     if self.eventHooks and self.eventHooks.prePurchase then
-        allowPurchase, err, errMessage = eventHook.execute(self.eventHooks.prePurchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
+        allowPurchase, err, errMessage, invisible = eventHook.execute(self.eventHooks.prePurchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
     end
     if allowPurchase == false then
-        refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or self.config.lang.refundDenied, err)
-        if self.eventHooks and self.eventHooks.failedPurchase then
-            eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or self.config.lang.refundDenied, err)
+        if not invisible then
+            refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or self.config.lang.refundDenied, err)
+            if self.eventHooks and self.eventHooks.failedPurchase then
+                eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or self.config.lang.refundDenied, err)
+            end
         end
         return
     end

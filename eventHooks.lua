@@ -4,7 +4,8 @@ return {
     -- If product is nil, product will be selected by the shop,
     -- If product is false, customer will be refunded for no product found.
     -- If product is false and errored is true, customer will be refunded with error message.
-    prePurchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency) returns continueTransaction, errored, errorMessage
+    preStockCheck = nil, -- function(transaction, productsPurchased, products)
+    prePurchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency) returns continueTransaction, errored, errorMessage, invisible
     purchase = nil, -- function(product, amount, refundAmount, transaction, transactionCurrency)
     failedPurchase = nil, -- function(transaction, transactionCurrency, product, errorMessage)
     programError = nil, -- function(err)

@@ -1,4 +1,4 @@
-local version = "1.3.25"
+local version = "1.3.26"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
 local ScanInventory = require("core.inventory.ScanInventory")
