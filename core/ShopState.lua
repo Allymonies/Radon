@@ -166,7 +166,16 @@ function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCu
         end
     end
     if self.eventHooks and self.eventHooks.preStockCheck then
-        eventHook.execute(self.eventHooks.preStockCheck, transaction, productsPurchased, self.products)
+        local allowPurchase, err, errMessage, invisible = eventHook.execute(self.eventHooks.preStockCheck, transaction, productsPurchased, self.products)
+        if allowPurchase == false then
+            if not invisible then
+                refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or self.config.lang.refundDenied, err)
+                if self.eventHooks and self.eventHooks.failedPurchase then
+                    eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, errMessage or self.config.lang.refundDenied, err)
+                end
+            end
+            return
+        end
     end
     local available = amountPurchased
     for _, productPurchased in ipairs(productsPurchased) do
