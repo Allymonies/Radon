@@ -243,13 +243,13 @@ local function findProductItemsFrom(product, quantity, items, cached)
     return sources, quantity - remaining
 end
 
-local function findProductItems(products, product, quantity)
+local function findProductItems(products, product, quantity, onInventoryRefresh)
     local sources = nil
     local amount = 0
     local items = getItemCache()
     sources, amount = findProductItemsFrom(product, quantity, items, true)
     if amount == 0 then
-        updateProductInventory(products)
+        updateProductInventory(products, onInventoryRefresh)
         items = getItemCache()
         sources, amount = findProductItemsFrom(product, quantity, items)
     end

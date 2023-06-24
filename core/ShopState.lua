@@ -179,7 +179,11 @@ function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCu
     end
     local available = amountPurchased
     for _, productPurchased in ipairs(productsPurchased) do
-        local productSources, productAvailable = ScanInventory.findProductItems(self.products, productPurchased.product, productPurchased.quantity * amountPurchased)
+        local onInventoryRefresh
+        if self.eventHooks and self.eventHooks.onInventoryRefresh then
+            onInventoryRefresh = self.eventHooks.onInventoryRefresh
+        end
+        local productSources, productAvailable = ScanInventory.findProductItems(self.products, productPurchased.product, productPurchased.quantity * amountPurchased, onInventoryRefresh)
         available = math.min(available, math.floor(productAvailable / productPurchased.quantity))
         productPurchased.sources = productSources
         if available == 0 then
