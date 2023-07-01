@@ -166,7 +166,7 @@ function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCu
         end
     end
     if self.eventHooks and self.eventHooks.preStockCheck then
-        local allowPurchase, err, errMessage, invisible = eventHook.execute(self.eventHooks.preStockCheck, transaction, productsPurchased, self.products)
+        local allowPurchase, err, errMessage, invisible = eventHook.execute(self.eventHooks.preStockCheck, transaction, productsPurchased, self.products, amountPurchased)
         if allowPurchase == false then
             if not invisible then
                 refund(transactionCurrency, transaction.from, meta, transaction.value, errMessage or self.config.lang.refundDenied, err)
@@ -342,16 +342,7 @@ function ShopState:runShop()
                             sentMetaname = meta[1]
                         end
                         if sentMetaname then
-                            local success, err = pcall(ShopState.handlePurchase, self, transaction, meta, sentMetaname, transactionCurrency)
-                            if success then
-                                -- Success :D
-                            else
-                                refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundError, true)
-                                if self.eventHooks and self.eventHooks.failedPurchase then
-                                    eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, nil, self.config.lang.refundError)
-                                end
-                                error(err)
-                            end
+                            os.queueEvent("radon_purchase", transaction, meta, sentMetaname, transactionCurrency)
                         elseif self.config.settings.refundMissingMetaname then
                             if self.config.settings.refundInvalidMetaname then
                                 refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundNoProduct, true)
@@ -361,6 +352,22 @@ function ShopState:runShop()
                             end
                         end
                     end
+                end
+            end
+        end
+    end, function()
+        while self.running do
+            local event, transaction, meta, sentMetaname, transactionCurrency = os.pullEvent("radon_purchase")
+            if event == "radon_purchase" then
+                local success, err = pcall(ShopState.handlePurchase, self, transaction, meta, sentMetaname, transactionCurrency)
+                if success then
+                    -- Success :D
+                else
+                    refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundError, true)
+                    if self.eventHooks and self.eventHooks.failedPurchase then
+                        eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, nil, self.config.lang.refundError)
+                    end
+                    error(err)
                 end
             end
         end

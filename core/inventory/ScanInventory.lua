@@ -159,6 +159,10 @@ local function updateProductInventory(products, onInventoryRefresh)
     products = score.copyDeep(originalProducts)
     local items = getAllInventoryItems(inventories, products)
     itemCache = items
+    if onInventoryRefresh then
+        eventHook.execute(onInventoryRefresh, products, items)
+    end
+
     for i = 1, #products do
         local product = products[i]
         product.predicatesString = nil
@@ -185,9 +189,6 @@ local function updateProductInventory(products, onInventoryRefresh)
         product.newQty = nil
         product.__opaque = true
         originalProducts[i] = product
-    end
-    if onInventoryRefresh then
-        eventHook.execute(onInventoryRefresh, products, items)
     end
 end
 
