@@ -317,6 +317,7 @@ function ShopState:runShop()
     self.kryptonListeners = {}
     self:setupKrypton()
     ScanInventory.clearNbtCache()
+    local transactions = {}
     parallel.waitForAny(function()
         while true do
             local event, transactionEvent = os.pullEvent("transaction")
@@ -342,7 +343,14 @@ function ShopState:runShop()
                             sentMetaname = meta[1]
                         end
                         if sentMetaname then
-                            os.queueEvent("radon_purchase", transaction, meta, sentMetaname, transactionCurrency)
+                            local purchaseData = {
+                                transaction = transaction,
+                                meta = meta,
+                                sentMetaname = sentMetaname,
+                                transactionCurrency = transactionCurrency
+                            }
+                            transactions[#transactions + 1] = purchaseData
+                            os.queueEvent("radon_purchase", purchaseData) -- for hooks that might be able to catch it (parallel).
                         elseif self.config.settings.refundMissingMetaname then
                             if self.config.settings.refundInvalidMetaname then
                                 refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundNoProduct, true)
@@ -357,15 +365,25 @@ function ShopState:runShop()
         end
     end, function()
         while self.running do
-            local event, transaction, meta, sentMetaname, transactionCurrency = os.pullEvent("radon_purchase")
-            if event == "radon_purchase" then
-                local success, err = pcall(ShopState.handlePurchase, self, transaction, meta, sentMetaname, transactionCurrency)
+            -- Run event hook for the parallel constant running task
+            -- This can do things like listen to events or host applications
+            if self.eventHooks and self.eventHooks.parallel then
+                eventHook.execute(self.eventHooks.parallel)
+            end
+            sleep(blinkFrequency)
+        end
+    end, function()
+        while self.running do
+            os.pullEvent("radon_purchase")
+            while #transactions > 0 do
+                local purchaseData = table.remove(transactions, 1)
+                local success, err = pcall(ShopState.handlePurchase, self, purchaseData.transaction, purchaseData.meta, purchaseData.sentMetaname, purchaseData.transactionCurrency)
                 if success then
                     -- Success :D
                 else
-                    refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundError, true)
+                    refund(purchaseData.transactionCurrency, purchaseData.transaction.from, purchaseData.meta, purchaseData.transaction.value, self.config.lang.refundError, true)
                     if self.eventHooks and self.eventHooks.failedPurchase then
-                        eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, nil, self.config.lang.refundError)
+                        eventHook.execute(self.eventHooks.failedPurchase, purchaseData.transaction, purchaseData.transactionCurrency, nil, self.config.lang.refundError)
                     end
                     error(err)
                 end
@@ -403,15 +421,6 @@ function ShopState:runShop()
             end
             if self.eventHooks and self.eventHooks.blink then
                 eventHook.execute(self.eventHooks.blink, blinkState)
-            end
-            sleep(blinkFrequency)
-        end
-    end, function()
-        while self.running do
-            -- Run event hook for the parallel constant running task
-            -- This can do things like listen to events or host applications
-            if self.eventHooks and self.eventHooks.parallel then
-                eventHook.execute(self.eventHooks.parallel)
             end
             sleep(blinkFrequency)
         end
