@@ -256,7 +256,6 @@ return {
         description = "A radon Shop",
         owner = nil,
         location = {
-            coordinates = nil,
             description = nil,
             dimension = "overworld"
         }

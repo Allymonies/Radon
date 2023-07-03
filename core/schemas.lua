@@ -197,12 +197,6 @@ local configSchema = {
         description = "string?",
         owner = "string?",
         location = {
-            coordinates = {
-                __type = "array?",
-                __min = 3,
-                __max = 3,
-                __entry = "number"
-            },
             description = "string?",
             dimension = "enum<'overworld' | 'nether' | 'end'>?: dimension"
         }

@@ -425,9 +425,13 @@ function ShopState:runShop()
             sleep(blinkFrequency)
         end
     end, function()
+        local x, y, z
         while self.running do
             sleep(shopSyncFrequency)
             if self.config.shopSync and self.config.shopSync.enabled and self.peripherals.shopSyncModem then
+                if not x or not y or not z then
+                    x, y, z = gps.locate(5)
+                end
                 local items = {}
                 for i = 1, #self.products do
                     local product = self.products[i]
@@ -482,7 +486,11 @@ function ShopState:runShop()
                             name = "Radon",
                             version = self.version
                         },
-                        location = self.config.shopSync.location,
+                        location = {
+                            coordinates = {x, y, z},
+                            description = self.config.shopSync.location.description,
+                            dimension = self.config.shopSync.location.dimension
+                        },
                     },
                     items = items
                 })
