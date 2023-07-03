@@ -251,7 +251,7 @@ return {
         },--]]
     },
     shopSync = {
-        enabled = true,
+        enabled = false,
         name = "Radon Shop",
         description = "A radon Shop",
         owner = nil,
