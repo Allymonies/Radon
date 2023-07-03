@@ -80,14 +80,20 @@ function getNewConfig(config, configDiffs, arrayAdds, arrayRemoves)
     local newConfig = score.copyDeep(config)
     for k, addSchema in pairs(arrayAdds) do
         local subConfig = newConfig
+        local fullPath = nil
         for path in k:gmatch("([^%[?%]?%.?]+)") do
+            if fullPath then
+                fullPath = fullPath .. "." .. path
+            else
+                fullPath = path
+            end
             if path:match("%d+") then
                 path = tonumber(path) or path
             end
             if subConfig[path] then
                 subConfig = subConfig[path]
             else
-                if type(addSchema) == "string" and addSchema:sub(1,6) == "number" then
+                if fullPath == k and type(addSchema) == "string" and addSchema:sub(1,6) == "number" then
                     subConfig[path] = 0
                 else
                     subConfig[path] = {}
