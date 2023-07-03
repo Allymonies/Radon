@@ -152,7 +152,7 @@ local function validate(config, schema, path)
             if schema.__entry then
                 local validationErrors = {}
                 for i = 1, #config do
-                    if type(config[i]) ~= "table" then
+                    if type(config[i]) ~= "table" or type(config[i]) ~= "table" then
                         local err = typeCheck(schema.__entry, schema.__entry, config[i], path .. "[" .. i .. "]")
                         if err then
                             table.insert(validationErrors, err)
