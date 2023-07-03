@@ -47,12 +47,12 @@ return Solyd.wrapComponent("TextInput", function(props)
                 if inputState.value:find("%.") then
                     return
                 end
-            elseif char:match("%D") then
-                return
             elseif char == "-" then
                 if inputState.cursorPos ~= 1 or inputState.value:find("%-") then
                     return
                 end
+            elseif char:match("%D") then
+                return
             end
         elseif props.type == "colorpicker" then
             if char == "x" then
@@ -98,6 +98,7 @@ return Solyd.wrapComponent("TextInput", function(props)
         color = props.color,
         width = props.width,
     },
+---@diagnostic disable-next-line: redundant-return-value
     {
         -- canvas = canvas,
         aabb = useBoundingBox((props.x*2)-1, (props.y*3)-2, (props.width)*2, (props.height)*3,
@@ -205,7 +206,11 @@ return Solyd.wrapComponent("TextInput", function(props)
             function(contents)
                 -- On paste
                 if props.type == "number" then
-                    contents = contents:gsub("[^%d]", "")
+                    if contents:sub(1, 1) == "-" then
+                        contents = "-" .. contents:gsub("[^%d]", "")
+                    else
+                        contents = contents:gsub("[^%d]", "")
+                    end
                 elseif props.type == "colorpicker" then
                     if contents:sub(1, 1) ~= "#" or contents:sub(1,2):find("x") then
                         contents = "#" .. contents:gsub("[^%x]", "")

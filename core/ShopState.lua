@@ -435,7 +435,7 @@ function ShopState:runShop()
                     local nbt = nil
                     local predicates = nil
                     if product.predicates then
-                        nbt = ""
+                        nbt = nil -- TODO: Can we get an nbt hash?
                         predicates = product.predicates
                     end
                     for j = 1, #self.config.currencies do
@@ -455,17 +455,20 @@ function ShopState:runShop()
                             value = product.price / currency.value,
                             currency = currencyName,
                             address = address,
-                            --requiredMeta = requiredMeta
+                            requiredMeta = requiredMeta
                         })
                     end
                     table.insert(items, {
-                        price = prices,
+                        prices = prices,
                         item = {
                             name = product.modid,
                             displayName = product.name,
                             nbt = nbt,
                             --predicates = predicates
-                        }
+                        },
+                        dynamicPrice = false,
+                        stock = product.quantity,
+                        madeOnDemand = false,
                     })
                 end
                 self.peripherals.shopSyncModem.transmit(shopSyncChannel, os.getComputerID(), {
@@ -474,15 +477,14 @@ function ShopState:runShop()
                         name = self.config.shopSync.name,
                         description = self.config.shopSync.description,
                         owner = self.config.shopSync.owner,
+                        computerID = os.getComputerID(),
                         software = {
                             name = "Radon",
                             version = self.version
                         },
                         location = self.config.shopSync.location,
                     },
-                    items = {
-
-                    }
+                    items = items
                 })
             end
         end

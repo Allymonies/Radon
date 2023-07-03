@@ -78,7 +78,7 @@ end
 
 function getNewConfig(config, configDiffs, arrayAdds, arrayRemoves)
     local newConfig = score.copyDeep(config)
-    for k, _ in pairs(arrayAdds) do
+    for k, addSchema in pairs(arrayAdds) do
         local subConfig = newConfig
         for path in k:gmatch("([^%[?%]?%.?]+)") do
             if path:match("%d+") then
@@ -87,7 +87,11 @@ function getNewConfig(config, configDiffs, arrayAdds, arrayRemoves)
             if subConfig[path] then
                 subConfig = subConfig[path]
             else
-                subConfig[path] = {}
+                if addSchema:sub(1,6) == "number" then
+                    subConfig[path] = 0
+                else
+                    subConfig[path] = {}
+                end
                 subConfig = subConfig[path]
             end
         end

@@ -178,6 +178,17 @@ return {
             pitch = 2
         },
     },
+    shopSync = {
+        enabled = true,
+        name = "Radon Shop",
+        description = "A radon Shop",
+        owner = nil,
+        location = {
+            coordinates = {nil, nil, nil},
+            description = nil,
+            dimension = "overworld"
+        }
+    },
     peripherals = {
         monitor = nil, -- Monitor to display on, if not specified, will use the first monitor found
         modem = nil, -- Modem for inventories, if not specified, will use the first wired modem found

@@ -1,4 +1,4 @@
-local version = "1.3.29"
+local version = "1.3.30"
 local configHelpers = require "util.configHelpers"
 local schemas       = require "core.schemas"
 local ScanInventory = require("core.inventory.ScanInventory")
@@ -78,9 +78,9 @@ end
 local peripherals = {}
 configHelpers.getPeripherals(config, peripherals)
 
-if config.shopSync and config.shopSync.enabled and not config.shopSync.force then
-    error("ShopSync is not yet finalized, please update Radon to use this feature, or set config.shopSync.force to true to use current ShopSync spec")
-end
+-- if config.shopSync and config.shopSync.enabled and not config.shopSync.force then
+--     error("ShopSync is not yet finalized, please update Radon to use this feature, or set config.shopSync.force to true to use current ShopSync spec")
+-- end
 
 local display = Display.new({theme=config.theme, monitor=config.peripherals.monitor})
 local terminal = Display.new({theme=config.terminalTheme, monitor=term})

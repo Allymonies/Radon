@@ -388,12 +388,12 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                     if textY >= props.y + 1 and textY <= props.y + props.height then
                         if v:sub(1, 6) == "string" or v:sub(1,5) == "regex" or v:sub(1,4) == "file"
                             or v:sub(1,5) == "modem" or v:sub(1,7) == "speaker" or v:sub(1,5) == "chest" then
-                            local inputStateValue = configDiffs[fullPath] or subConfig[k]
+                            local inputStateValue = configDiffs[fullPath] or subConfig[k] or subConfig[tonumber(k)]
                             if inputStateValue == "%nil%" then
                                 inputStateValue = nil
                             end
                             table.insert(elements, TextInput {
-                                key = "config-value-"..k,
+                                key = "config-value-"..fullPath,
                                 display = props.display,
                                 align = "left",
                                 x = props.x + xOffset,
@@ -420,7 +420,7 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                                 toggleStartValue = subConfig[k]
                             end
                             table.insert(elements, Rect {
-                                key = "config-value-" .. k .. "-bg",
+                                key = "config-value-" .. fullPath .. "-bg",
                                 display = props.display,
                                 x = (props.x*2)-1 + xOffset*2,
                                 y = (textY*3)-2,
@@ -450,7 +450,7 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                             })
                         elseif v:sub(1, 6) == "number" then
                             table.insert(elements, Rect {
-                                key = "config-value-" .. k .. "-bg",
+                                key = "config-value-" .. fullPath .. "-bg",
                                 display = props.display,
                                 x = (props.x*2)-1 + 12*2 + xOffset*2,
                                 y = (textY*3)-2,
@@ -473,7 +473,7 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                                 bg = theme.inputBgColor,
                                 height = 1,
                                 width = 12,
-                                inputState = { value = configDiffs[fullPath] or subConfig[k]  },
+                                inputState = { value = configDiffs[fullPath] or subConfig[k] or subConfig[tonumber(k)] },
                                 onChange = function(value)
                                     configDiffs[fullPath] = value
                                     setConfigDiffs(configDiffs)
@@ -485,7 +485,7 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                         elseif v:sub(1, 5) == "color" then
                             lastSelect = true
                             table.insert(elements, Select {
-                                key = "config-value-"..k,
+                                key = "config-value-"..fullPath,
                                 display = props.display,
                                 x = props.x + xOffset,
                                 y = textY,
@@ -531,7 +531,7 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                                 table.insert(options, { value = enumValue, text = enumValue })
                             end
                             table.insert(elements, Select {
-                                key = "config-value-"..k,
+                                key = "config-value-"..fullPath,
                                 display = props.display,
                                 x = props.x + xOffset,
                                 y = textY,
@@ -584,7 +584,7 @@ return Solyd.wrapComponent("ConfigEditor", function(props)
                             width = #buttonText + 2,
                             text = buttonText,
                             onClick = function()
-                                arrayAdds[props.terminalState.configPath .. "." .. tostring(numKeys)] = true
+                                arrayAdds[props.terminalState.configPath .. "." .. tostring(numKeys)] = subSchema.__entry
                                 setArrayAdds(arrayAdds)
                                 setUpdates(updates + 1)
                                 local newConfig = configHelpers.getNewConfig(props.config, configDiffs, arrayAdds, arrayRemoves)

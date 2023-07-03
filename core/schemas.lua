@@ -191,22 +191,22 @@ local configSchema = {
         exchangeChest = "chest?",
         outputChest = "chest",
     },
-    -- shopSync = {
-    --     enabled = "boolean?",
-    --     name = "string?",
-    --     description = "string?",
-    --     owner = "string?",
-    --     location = {
-    --         coordinates = {
-    --             __type = "array?",
-    --             __min = 3,
-    --             __max = 3,
-    --             __entry = "number"
-    --         },
-    --         description = "string?",
-    --         dimension = "enum<'overworld' | 'nether' | 'end'>?: dimension"
-    --     }
-    -- },
+    shopSync = {
+        enabled = "boolean?",
+        name = "string?",
+        description = "string?",
+        owner = "string?",
+        location = {
+            coordinates = {
+                __type = "array",
+                __min = 3,
+                __max = 3,
+                __entry = "number"
+            },
+            description = "string?",
+            dimension = "enum<'overworld' | 'nether' | 'end'>?: dimension"
+        }
+    },
     exchange = {
         enabled = "boolean",
         node = "string"

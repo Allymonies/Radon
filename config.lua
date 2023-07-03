@@ -250,6 +250,17 @@ return {
             value = 0.1 -- Default scaling on item prices, can be overridden on a per-item basis
         },--]]
     },
+    shopSync = {
+        enabled = true,
+        name = "Radon Shop",
+        description = "A radon Shop",
+        owner = nil,
+        location = {
+            coordinates = nil,
+            description = nil,
+            dimension = "overworld"
+        }
+    },
     peripherals = {
         monitor = nil, -- Monitor to display on, if not specified, will use the first monitor found
         modem = nil, -- Modem for inventories, if not specified, will use the first wired modem found
