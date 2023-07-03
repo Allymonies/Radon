@@ -87,7 +87,7 @@ function getNewConfig(config, configDiffs, arrayAdds, arrayRemoves)
             if subConfig[path] then
                 subConfig = subConfig[path]
             else
-                if addSchema:sub(1,6) == "number" then
+                if type(addSchema) == "string" and addSchema:sub(1,6) == "number" then
                     subConfig[path] = 0
                 else
                     subConfig[path] = {}
