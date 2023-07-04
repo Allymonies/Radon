@@ -6,6 +6,7 @@ local configSchema = {
     },
     settings = {
         hideUnavailableProducts = "boolean",
+        hideNegativePrices = "boolean",
         pollFrequency = "number",
         categoryCycleFrequency = "number",
         activityTimeout = "number",

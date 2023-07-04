@@ -1,12 +1,17 @@
 local bigFont = require("fonts.bigfont")
 local smolFont = require("fonts.smolfont")
+local Pricing = require("core.Pricing")
 
-local function getDisplayedProducts(allProducts, settings)
+local function getDisplayedProducts(allProducts, settings, currency)
     local displayedProducts = {}
     for i = 1, #allProducts do
         local product = allProducts[i]
         product.id = i
-        if not settings.hideUnavailableProducts or (product.quantity and product.quantity > 0) then
+        local productPrice = Pricing.getProductPrice(product, currency)
+        if
+            (not settings.hideUnavailableProducts or (product.quantity and product.quantity > 0))
+            and (not settings.hideNegativePrices or (productPrice and productPrice >= 0))
+            then
             table.insert(displayedProducts, product)
         end
     end

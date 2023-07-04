@@ -139,7 +139,7 @@ local function render(canvas, display, props, theme, version)
     local shopProducts = {}
     if categories[selectedCategory] then
         catName = categories[selectedCategory].name
-        shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.configState.config.settings)
+        shopProducts = renderHelpers.getDisplayedProducts(categories[selectedCategory].products, props.configState.config.settings, props.shopState.selectedCurrency)
     end
     local productsHeight = display.bgCanvas.height - headerHeight - footerHeight - 2
     local heightPerProduct = math.floor(productsHeight / #shopProducts)

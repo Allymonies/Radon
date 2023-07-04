@@ -4,6 +4,7 @@ return {
     },
     settings = {
         hideUnavailableProducts = false,
+        hideNegativePrices = true,
         pollFrequency = 30,
         categoryCycleFrequency = -1,
         activityTimeout = 60,

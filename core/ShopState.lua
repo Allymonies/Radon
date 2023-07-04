@@ -438,7 +438,7 @@ function ShopState:runShop()
                     local prices = {}
                     local nbt = nil
                     local predicates = nil
-                    if not product.bundle and not product.hidden then
+                    if not product.bundle and not product.hidden and product.modid then
                         if product.predicates then
                             nbt = nil -- TODO: Can we get an nbt hash?
                             predicates = product.predicates
@@ -456,12 +456,25 @@ function ShopState:runShop()
                             else
                                 requiredMeta = product.address
                             end
-                            table.insert(prices, {
-                                value = product.price / currency.value,
-                                currency = currencyName,
-                                address = address,
-                                requiredMeta = requiredMeta
-                            })
+
+                            local price = product.price / currency.value
+
+                            if product.priceOverrides then
+                                for _, override in pairs(product.priceOverrides) do
+                                    if override.currency == currency.id then
+                                        price = override.price
+                                    end
+                                end
+                            end
+
+                            if price >= 0 then
+                                table.insert(prices, {
+                                    value = price,
+                                    currency = currencyName,
+                                    address = address,
+                                    requiredMeta = requiredMeta
+                                })
+                            end
                         end
                         table.insert(items, {
                             prices = prices,
