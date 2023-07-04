@@ -438,42 +438,44 @@ function ShopState:runShop()
                     local prices = {}
                     local nbt = nil
                     local predicates = nil
-                    if product.predicates then
-                        nbt = nil -- TODO: Can we get an nbt hash?
-                        predicates = product.predicates
-                    end
-                    for j = 1, #self.config.currencies do
-                        local currency = self.config.currencies[j]
-                        local currencyName = "KST"
-                        if currency.krypton and currency.krypton.currency and currency.krypton.currency.currency_symbol then
-                            currencyName = currency.krypton.currency.currency_symbol
+                    if not product.bundle and not product.hidden then
+                        if product.predicates then
+                            nbt = nil -- TODO: Can we get an nbt hash?
+                            predicates = product.predicates
                         end
-                        local address = currency.host
-                        local requiredMeta = nil
-                        if currency.name then
-                            address = product.address .. "@" .. currency.name
-                        else
-                            requiredMeta = product.address
+                        for j = 1, #self.config.currencies do
+                            local currency = self.config.currencies[j]
+                            local currencyName = "KST"
+                            if currency.krypton and currency.krypton.currency and currency.krypton.currency.currency_symbol then
+                                currencyName = currency.krypton.currency.currency_symbol
+                            end
+                            local address = currency.host
+                            local requiredMeta = nil
+                            if currency.name then
+                                address = product.address .. "@" .. currency.name
+                            else
+                                requiredMeta = product.address
+                            end
+                            table.insert(prices, {
+                                value = product.price / currency.value,
+                                currency = currencyName,
+                                address = address,
+                                requiredMeta = requiredMeta
+                            })
                         end
-                        table.insert(prices, {
-                            value = product.price / currency.value,
-                            currency = currencyName,
-                            address = address,
-                            requiredMeta = requiredMeta
+                        table.insert(items, {
+                            prices = prices,
+                            item = {
+                                name = product.modid,
+                                displayName = product.name,
+                                nbt = nbt,
+                                --predicates = predicates
+                            },
+                            dynamicPrice = false,
+                            stock = product.quantity,
+                            madeOnDemand = false,
                         })
                     end
-                    table.insert(items, {
-                        prices = prices,
-                        item = {
-                            name = product.modid,
-                            displayName = product.name,
-                            nbt = nbt,
-                            --predicates = predicates
-                        },
-                        dynamicPrice = false,
-                        stock = product.quantity,
-                        madeOnDemand = false,
-                    })
                 end
                 self.peripherals.shopSyncModem.transmit(shopSyncChannel, os.getComputerID(), {
                     type = "ShopSync",
