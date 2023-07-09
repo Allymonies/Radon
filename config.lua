@@ -14,7 +14,8 @@ return {
         playSounds = true,
         showFooter = true,
         refundInvalidMetaname = true,
-        refundMissingMetaname = true
+        refundMissingMetaname = true,
+        refundInsufficentFunds = true
     },
     lang = {
         footer = "/pay <item>@%name% <amt>",

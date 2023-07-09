@@ -134,7 +134,9 @@ function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCu
         amountPurchased = math.min(amountPurchased, purchasedProduct.maxQuantity)
     end
     if amountPurchased <= 0 then
-        refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundAtLeastOne, true)
+        if self.config.settings.refundInsufficentFunds then
+            refund(transactionCurrency, transaction.from, meta, transaction.value, self.config.lang.refundAtLeastOne, true)
+        end
         if self.eventHooks and self.eventHooks.failedPurchase then
             eventHook.execute(self.eventHooks.failedPurchase, transaction, transactionCurrency, purchasedProduct, self.config.lang.refundAtLeastOne)
         end
