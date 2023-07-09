@@ -15,7 +15,8 @@ local configSchema = {
         playSounds = "boolean",
         showFooter = "boolean",
         refundInvalidMetaname = "boolean",
-        refundMissingMetaname = "boolean"
+        refundMissingMetaname = "boolean",
+        refundInsufficentFunds = "boolean"
     },
     lang = {
         footer = "string",
