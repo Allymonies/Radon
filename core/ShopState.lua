@@ -2,6 +2,7 @@ local Krypton = require("Krypton")
 local ScanInventory = require("core.inventory.ScanInventory")
 local Pricing = require("core.Pricing")
 local sound = require("util.sound")
+local score = require("util.score")
 local eventHook = require("util.eventHook")
 
 local blinkFrequency = 3
@@ -93,6 +94,34 @@ local function refund(currency, address, meta, value, message, error)
     else
         currency.krypton.ws:makeTransaction(returnTo, value, "error=" .. message)
     end
+end
+
+local function hasProductsChanged(original, new)
+    if type(original) ~= type(new) then
+        return true
+    end
+    if type(original) ~= "table" then
+        return original ~= new
+    end
+    if #original ~= #new then
+        return true
+    end
+    for k, v in pairs(original) do
+        if k ~= "quantity" then
+            if new[k] == nil then
+                return true
+            end
+            if hasProductsChanged(v, new[k]) then
+                return true
+            end
+        end
+    end
+    for k, v in pairs(new) do
+        if original[k] == nil then
+            return true
+        end
+    end
+    return false
 end
 
 function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCurrency)
@@ -259,6 +288,7 @@ function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCu
     if self.eventHooks and self.eventHooks.purchase then
         eventHook.execute(self.eventHooks.purchase, purchasedProduct, available, refundAmount, transaction, transactionCurrency)
     end
+    os.queueEvent("radon_shopsync_update")
 end
 
 function ShopState:setupKrypton()
@@ -392,16 +422,31 @@ function ShopState:runShop()
             end
         end
     end, function()
+        local originalProducts = {}
+        for i = 1, #self.products do
+            originalProducts[i] = score.copyDeep(self.products[i])
+        end
         while self.running do
             local onInventoryRefresh = nil
             if self.eventHooks and self.eventHooks.onInventoryRefresh then
                 onInventoryRefresh = self.eventHooks.onInventoryRefresh
             end
-            ScanInventory.updateProductInventory(self.products, onInventoryRefresh)
+            local quantitiesChanged = ScanInventory.updateProductInventory(self.products, onInventoryRefresh)
             if self.config.settings.hideUnavailableProducts then
                 self.productsChanged = true
             end
+            if quantitiesChanged then
+                os.queueEvent("radon_shopsync_update")
+            end
             sleep(self.config.settings.pollFrequency)
+            local productsChanged = hasProductsChanged(originalProducts, self.products)
+            if productsChanged then
+                os.queueEvent("radon_shopsync_update")
+            end
+            originalProducts = {}
+            for i = 1, #self.products do
+                originalProducts[i] = score.copyDeep(self.products[i])
+            end
         end
     end, function()
         while self.running do
@@ -428,12 +473,21 @@ function ShopState:runShop()
         end
     end, function()
         local x, y, z
+        local lastShopSync = os.epoch("utc")
+        sleep(math.random() * 15 + 15)
+        os.queueEvent("radon_shopsync_update")
         while self.running do
-            sleep(shopSyncFrequency)
+            os.pullEvent("radon_shopsync_update")
             if self.config.shopSync and self.config.shopSync.enabled and self.peripherals.shopSyncModem then
                 if not x or not y or not z then
                     x, y, z = gps.locate(5)
                 end
+                local now = os.epoch("utc")
+                if (now - lastShopSync) < (shopSyncFrequency * 1000) then
+                    local timeToSleep = shopSyncFrequency - ((now - lastShopSync) / 1000)
+                    sleep(timeToSleep)
+                end
+                lastShopSync = os.epoch("utc")
                 local items = {}
                 for i = 1, #self.products do
                     local product = self.products[i]
@@ -442,8 +496,11 @@ function ShopState:runShop()
                     local predicates = nil
                     if not product.bundle and not product.hidden and product.modid then
                         if product.predicates then
-                            nbt = nil -- TODO: Can we get an nbt hash?
                             predicates = product.predicates
+                            if predicates.nbt then
+                                nbt = predicates.nbt
+                                -- TODO: Multiple nbt hashes for all matched predicates?
+                            end
                         end
                         for j = 1, #self.config.currencies do
                             local currency = self.config.currencies[j]
@@ -492,7 +549,7 @@ function ShopState:runShop()
                         })
                     end
                 end
-                self.peripherals.shopSyncModem.transmit(shopSyncChannel, os.getComputerID(), {
+                self.peripherals.shopSyncModem.transmit(shopSyncChannel, os.getComputerID() % 65536, {
                     type = "ShopSync",
                     info = {
                         name = self.config.shopSync.name,

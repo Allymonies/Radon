@@ -151,6 +151,7 @@ local function getAllInventoryItems(inventories, products)
 end
 
 local function updateProductInventory(products, onInventoryRefresh)
+    local quantitiesChanged = false
     for i = 1, #products do
         products[i].newQty = 0
     end
@@ -166,6 +167,7 @@ local function updateProductInventory(products, onInventoryRefresh)
     for i = 1, #products do
         local product = products[i]
         product.predicatesString = nil
+        local oldQty = product.quantity
         product.quantity = product.newQty
         if product.bundle and #product.bundle > 0 then
             if not product.modid then
@@ -186,10 +188,14 @@ local function updateProductInventory(products, onInventoryRefresh)
                 end
             end
         end
+        if product.quantity ~= oldQty then
+            quantitiesChanged = true
+        end
         product.newQty = nil
         product.__opaque = true
         originalProducts[i] = product
     end
+    return quantitiesChanged
 end
 
 local function getItemCache()
