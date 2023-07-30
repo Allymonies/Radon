@@ -19,7 +19,7 @@ Attach a wired modem to your turtle. Then add a chest on that wired network (it 
 
 Either use the ingame GUI editor on an advanced computer/turtle, or edit `config.lua` and change `branding.title` to the name of your shop you want shown in the header.
 
-Next change `currencies.name`, and `currencies.pkey` for the krist currency to your krist address, the krist name you will be using (or nil), and your krist address' private key, respectively. **Do not put your shop's title in `currencies.name`, just your ktrist name if you have one!** If you are using a kristwallet format password, change `currencies.pkeyFormat` to `"kristwallet"`. You can then either remove/comment out the tenebra currency, or fill in your respective details for that.
+Next change `currencies.name`, and `currencies.pkey` for the krist currency to your krist address, the krist name you will be using (or nil), and your krist address' private key, respectively. **Do not put your shop's title in `currencies.name`, just your krist name if you have one!** If you are using a kristwallet format password, change `currencies.pkeyFormat` to `"kristwallet"`. You can then either remove/comment out the tenebra currency, or fill in your respective details for that.
 
 **WARNING**: If you do not use a name for your shop, any transaction that doesn't purchase an item to your address will be refunded. Do not run the shop on your personal address you will be receiving krist to if you are not using a name.
 
