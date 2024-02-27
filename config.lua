@@ -251,6 +251,16 @@ return {
             -- You can get your raw pkey from kristweb or using https://pkey.its-em.ma/
             value = 0.1 -- Default scaling on item prices, can be overridden on a per-item basis
         },--]]
+        --[[{
+            id = "carrotpay", -- defaults to krist endpoint + carrotpay.herrkatze.com for name resolution
+            -- node = "https://krist.dev/"
+            host = nil
+            name = "radon.crt", -- Your krist name, usually ending in .kst
+            pkey = nil, -- Your private key, or password for kristwallet
+            pkeyFormat = "raw", -- Currently must be 'raw', kwallet support is planned
+            -- You can get your raw pkey from kristweb or using https://pkey.its-em.ma/
+            value = 0.1 -- Default scaling on item prices, can be overridden on a per-item basis
+        },--]]
     },
     shopSync = {
         enabled = false,

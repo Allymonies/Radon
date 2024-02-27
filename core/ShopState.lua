@@ -291,6 +291,29 @@ function ShopState:handlePurchase(transaction, meta, sentMetaname, transactionCu
     os.queueEvent("radon_shopsync_update")
 end
 
+function ShopState:resolveCarrotPayName(name)
+    -- Hardcoded endpoint as any future alternative name system is recommended to use the krist name API schema
+    local node = "https://carrotpay.herrkatze.com/v2/"
+    local endpoint = "names/" .. textutils.urlEncode(name) .. ".crt"
+    local url = node .. endpoint 
+    local response, err = http.get(url)
+    if not response then
+        error(err, 3)
+    end
+    local body = response.readAll()
+    response.close()
+
+    local data = textutils.unserializeJSON(body)
+    if not data.ok then
+        if (data.error ~= "invalid_parameter") then
+            error(data.error, 3)
+        else
+            error({data.error, data.parameter}, 3)
+        end
+    end
+    return data
+end
+
 function ShopState:setupKrypton()
     self.selectedCurrency = self.config.currencies[1]
     self.currencies = {}
@@ -300,7 +323,7 @@ function ShopState:setupKrypton()
             currency.name = nil
         end
         local node = currency.node
-        if not node and currency.id == "krist" then
+        if not node and (currency.id == "krist" or currency.id == "carrotpay") then
             node = "https://krist.dev/"
         elseif not node and currency.id == "tenebra" then
             node = "https://tenebra.lil.gay/"
@@ -325,7 +348,12 @@ function ShopState:setupKrypton()
             if name:find("%.") then
                 name = name:sub(1, name:find("%.") - 1)
             end
-            local nameInfo = currency.krypton:getName(name)
+            local nameInfo
+            if currency.id ~= "carrotpay" then
+                nameInfo = currency.krypton:getName(name)
+            else
+                nameInfo = self:resolveCarrotPayName(name)
+            end
             if not nameInfo then
                 error("Name " .. currency.name .. " does not exist!")
             end
@@ -369,8 +397,18 @@ function ShopState:runShop()
                     if sentName and transactionCurrency.name and transactionCurrency.name:find(".") then
                         sentName = sentName .. "." .. nameSuffix
                     end
+                    local meta = parseMeta(transaction.metadata)
+                    if transactionCurrency.id == "carrotpay" then
+                        -- Manually extract from meta
+                        for i = 1, #meta do
+                            local metaEntry = meta[i]
+                            sentMetaname, sentName, carrotPaySuffix = metaEntry:match("(.+)@(.+)%.(%w+)")
+                            if sentMetaname and sentName and carrotPaySuffix == "crt" then
+                                sentName = sentName .. "." .. carrotPaySuffix
+                            end
+                        end
+                    end
                     if transaction.from ~= transactionCurrency.host and (not transactionCurrency.name and not sentName) or (transactionCurrency.name and sentName and sentName:lower() == transactionCurrency.name:lower()) then
-                        local meta = parseMeta(transaction.metadata)
                         if transaction.to == transactionCurrency.host and not transactionCurrency.name and not sentMetaname then
                             sentMetaname = meta[1]
                         end
