@@ -22,6 +22,7 @@ function print(...)
     end
 end
 
+local radonPath = fs.getDir(shell.getRunningProgram())
 
 --- Imports
 local _ = require("util.score")
@@ -60,7 +61,7 @@ local configDefaults = require("configDefaults")
 local config = require("config")
 local products = require("products")
 local eventHooks = {}
-if fs.exists(fs.combine(fs.getDir(shell.getRunningProgram()), "eventHooks.lua")) then
+if fs.exists(fs.combine(radonPath, "eventHooks.lua")) then
     eventHooks = require("eventHooks")
 end
 --- End Imports
@@ -313,7 +314,7 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
                 configHelpers.getPeripherals(newConfig, peripherals)
                 -- TODO: Detect if we actually need to update currencies
                 props.shopState.changedCurrencies = true
-                local f = fs.open("config.lua", "w")
+                local f = fs.open(fs.combine(radonPath, "config.lua"), "w")
                 f.write("return " .. textutils.serialize(newConfig))
                 f.close()
                 print("Configs updated!")
@@ -349,7 +350,7 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
                     props.configState.config.ready = true
                 end
                 ScanInventory.clearNbtCache()
-                local f = fs.open("products.lua", "w")
+                local f = fs.open(fs.combine(radonPath, "products.lua"), "w")
                 f.write("return " .. textutils.serialize(cleanProducts(newConfig)))
                 f.close()
                 print("Products updated!")
