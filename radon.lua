@@ -65,6 +65,30 @@ if fs.exists(fs.combine(fs.getDir(shell.getRunningProgram()), "eventHooks.lua"))
 end
 --- End Imports
 
+local function cleanProducts(products)
+    local cleaned = {}
+    for k,v in pairs(products) do
+        local clonev
+
+        if type(v) == "table" then
+            clonev = {}
+            for k,v in pairs(v) do
+                if k ~= "__opaque" and k ~= "id" and k ~= "quantity" then
+                    clonev[k] = v
+                end
+            end
+        else
+            clonev = v
+        end
+
+        cleaned[k] = clonev
+    end
+
+    return cleaned
+end
+
+products = cleanProducts(products)
+
 configHelpers.loadDefaults(config, configDefaults)
 local configErrors = ConfigValidator.validateConfig(config)
 local productsErrors = ConfigValidator.validateProducts(products)
@@ -326,7 +350,7 @@ local Terminal = Solyd.wrapComponent("Terminal", function(props)
                 end
                 ScanInventory.clearNbtCache()
                 local f = fs.open("products.lua", "w")
-                f.write("return " .. textutils.serialize(newConfig))
+                f.write("return " .. textutils.serialize(cleanProducts(newConfig)))
                 f.close()
                 print("Products updated!")
                 if props.configState.eventHooks and props.configState.eventHooks.productsSaved then
